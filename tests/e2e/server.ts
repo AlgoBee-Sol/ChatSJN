@@ -16,8 +16,11 @@ const { createApp } = await import('../../apps/api/src/app.js');
 const { initModels, UserModel } = await import('../../apps/api/src/models.js');
 const { seedFixture, testProviders } = await import('../../apps/api/tests/fixtures.js');
 await initModels();
-await seedFixture('SISTANI');
-await seedFixture('ALI_KHAMENEI');
+await seedFixture(
+  'JAWAD_NAQVI',
+  'APPROVED',
+  'SYNTHETIC TEST FIXTURE: A patience example used solely to exercise retrieval, never religious guidance.',
+);
 const argon2 = await import('argon2');
 await UserModel.create({
   email: 'synthetic-admin@example.org',

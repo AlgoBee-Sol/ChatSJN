@@ -162,7 +162,7 @@ test('ownership prevents reading, editing, deleting or writing another user conv
   }
 });
 test('no approved sources produces an honest answer without calling AI; retries are idempotent', async () => {
-  const body = { question: 'What is the ruling for prayer?', requestId: crypto.randomUUID() };
+  const body = { question: 'Explain patience', requestId: crypto.randomUUID() };
   const response = await request(`/api/conversations/${conversationId}/messages`, {
     method: 'POST',
     body,
@@ -429,7 +429,19 @@ test('large full-text corpus, bounded embedding cache, safe query syntax and arc
     method: 'POST',
     body: { question: 'What is the ruling for prayer?', requestId: crypto.randomUUID() },
   });
-  assert.match(await fiqh.text(), /insufficient/);
+  assert.match(await fiqh.text(), /not available in this phase/);
+  const general = await request(`/api/conversations/${conversationId}/messages`, {
+    method: 'POST',
+    body: { question: 'Explain ethical behavior', requestId: crypto.randomUUID() },
+  });
+  const generalAnswer = (await general.text())
+    .trim()
+    .split('\n\n')
+    .map((x) => JSON.parse(x.slice(6)))
+    .find((x) => x.type === 'done').message;
+  assert.equal(generalAnswer.category, 'OTHER');
+  assert.equal(generalAnswer.mode, 'grounded');
+  assert.ok(generalAnswer.citations.every((c) => c.authority === 'JAWAD_NAQVI'));
   await request(`/api/admin/sources/${source._id}/action`, {
     method: 'POST',
     body: { action: 'unpublish' },

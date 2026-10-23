@@ -1,5 +1,7 @@
 # Source governance
 
+**Current product scope:** Fiqh and Marja selection are paused. Only approved educational sources are used for new educational answers; historical records remain intact. The authority model below is retained for provenance and a future reviewed Fiqh release. See [educational scope](EDUCATIONAL_SCOPE.md).
+
 ## Authority and ownership
 
 Fiqh authority IDs are immutable: SISTANI and ALI_KHAMENEI. Education uses JAWAD_NAQVI. The schema prevents Fiqh sources being assigned to the educational scholar, and prevents educational documents being given Fiqh topics. Metadata distinguishes source authority from subject category.

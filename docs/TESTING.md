@@ -12,6 +12,8 @@ Playwright starts its own Vite/API servers on 5174/3002 and an isolated database
 
 ## Coverage
 
+The educational-only phase adds coverage for English/Urdu/Roman Urdu Fiqh deferral before retrieval or generation, mixed-topic Fiqh requests, generator-level scope enforcement, general educational search excluding Fiqh documents, and compatibility of stored Marja snapshots. Browser onboarding also resumes accounts saved at the former Marja step without requiring a selection. Current backend totals: **51 Vitest tests and 11 Worker runtime tests**. Existing low-level authority-isolation tests remain as regression checks for the preserved schema, not as enabled product functionality.
+
 23 unit checks: multilingual conservative classification, preferred/explicit language selection, deceased-Marja referral routing, education/Fiqh authority separation, invalid/duplicate citations, no-evidence refusal without a model call, malicious-source policy boundaries, exact quote matching, text normalization, adult/profile validation, metadata-authority consistency, cosine dimensions, overlapping chunks, actual PDF page extraction and invalid binary files.
 
 13 API integration checks: registration, login, logout, cookie flags, onboarding resume, protected endpoints, CSRF, adult restriction, admin enforcement, conversation ownership/rename/deletion, missing provider errors, source upload/extraction, embedding/approval/unpublishing, immutable published material, rejected/failed ingestion, both directions of Marja isolation, draft/irrelevant exclusion, malicious-source routing, idempotent answer replay, historical provenance after Marja changes, insufficient evidence and educational authority independence.
@@ -21,6 +23,8 @@ Playwright starts its own Vite/API servers on 5174/3002 and an isolated database
 6 browser journeys: learner, administrator and authentication-screen flows on both desktop and mobile. Learner tests register, reload/resume onboarding, choose preferences, ask a fixture-backed question, inspect an actual citation, rename history, update profile, switch to Urdu, verify RTL/mobile navigation, change the password, sign out everywhere and sign back in. Admin tests log in, upload a synthetic file, inspect extracted text, publish and unpublish. Browser journeys check zero JavaScript page errors, viewport overflow and automated axe WCAG 2 A/AA violations on the landing page, Urdu workspace source studio, login and signup. Authentication-screen tests verify the unconfigured Google state and safe cancelled-consent message.
 
 ## Recorded local results
+
+The learning-room redesign also exercises desktop sidebar collapse/expand, recent-history filtering and empty results, starter-question insertion/focus, follow-up focus, a composer visible in the initial viewport, and mobile drawer dismissal. Automated axe checks include the English welcome, answered chat and open mobile drawer. The six journeys pass with the redesigned desktop/mobile layouts, including Urdu RTL, source inspection and account settings. Public previews are regenerated only from these synthetic fixtures.
 
 - Unit + integration: **44 passed**.
 - Playwright: **6 passed** (desktop and mobile learner/admin/auth journeys).

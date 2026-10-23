@@ -20,6 +20,8 @@ These resources belong only to SJN AI. Other applications in the account are unc
 
 ## Behavior and scope
 
+The current release uses the redesigned learning room and [educational-only scope](EDUCATIONAL_SCOPE.md). Marja selection is hidden, onboarding has three visible steps, and recognized Fiqh requests receive guidance without retrieval or generation. General educational questions search only approved educational sources. This release changes no database schema, stored preferences or source records; no migration or re-import is needed.
+
 Email/password registration, sessions, adult onboarding, preferences, conversation history and administrator source review use D1. Better Auth uses its portable default password hashing for hosted accounts; the local MongoDB version retains Argon2id. They are separate account databases. Original uploads use private R2; PDF extraction runs through `unpdf` in Workers. The shared classifier, authority rules and citation validator serve both backends.
 
 Google is deliberately disabled until the owner supplies OAuth credentials. The operator-authorized SJN website corpus is now managed through the [reviewed source-indexing workflow](SOURCE_INDEXING.md). Without approved evidence, the app returns an explicit insufficient-source message instead of generating a religious answer. The administrator account must complete its own onboarding. Its temporary login is recorded in `.local/cloudflare/admin-credentials.json`; change the password in **Your preferences → Change password** after first login. This file is not part of the repository.

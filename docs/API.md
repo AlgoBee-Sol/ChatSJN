@@ -35,6 +35,8 @@ Native `/auth/*` responses follow Better Auth contracts (auth errors are `{code,
 
 List responses use `{items,total,page,limit}`. Single resources use `{user}`, `{conversation}` or `{source}`. Message pages contain stored citation objects. Maximum page size is 50.
 
+The current educational-only mode returns `mode: "guidance"` and no citations for recognized Fiqh requests. Stored `marja` and `marjaSnapshot` fields remain for compatibility, but do not select educational sources. New onboarding uses persisted steps 1, 3 and 4; step 2 resumes at language selection. See [scope](EDUCATIONAL_SCOPE.md).
+
 ## SSE
 
 Content-Type: text/event-stream. Events are JSON in `data:` lines separated by a blank line.
@@ -42,7 +44,7 @@ Content-Type: text/event-stream. Events are JSON in `data:` lines separated by a
 ```text
 data: {"type":"delta","text":"Validated answer segment"}
 
-data: {"type":"done","message":{"_id":"...","role":"assistant","content":"...","citations":[],"marjaSnapshot":"SISTANI","language":"en","category":"FIQH","mode":"insufficient"}}
+data: {"type":"done","message":{"_id":"...","role":"assistant","content":"...","citations":[],"marjaSnapshot":"SISTANI","language":"en","category":"AKHLAQ","mode":"insufficient"}}
 ```
 
 Use a new UUID per submitted question; preserve it when retrying an interrupted request. A replay of a completed UUID returns its stored `done` message. The client uses a fetch stream (POST), not EventSource. Response references are validated before any answer text is streamed. On provider/validation failure the endpoint returns a JSON error, not partial theological output.

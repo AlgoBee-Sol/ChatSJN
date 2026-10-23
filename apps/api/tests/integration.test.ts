@@ -143,7 +143,7 @@ describe('accounts, ownership and persistence', () => {
       .set('Cookie', cookies)
       .set('Origin', origin)
       .set('X-SJN-Request', '1')
-      .send({ question: 'What is wudu?', requestId: randomUUID() });
+      .send({ question: 'What is patience?', requestId: randomUUID() });
     expect(response.status).toBe(503);
     expect(response.body.error.code).toBe('AI_NOT_CONFIGURED');
     expect(await MessageModel.countDocuments()).toBe(0);
@@ -276,9 +276,10 @@ describe('critical religious safety', () => {
     );
     expect(hits.every((h) => h.authority === 'SISTANI')).toBe(true);
   });
-  it('streams grounded answers, retries idempotently and preserves Marja snapshots', async () => {
+  it('streams grounded answers, retries idempotently and preserves stored preferences without changing educational authority', async () => {
     await seedFixture('SISTANI');
     await seedFixture('ALI_KHAMENEI');
+    await seedFixture('JAWAD_NAQVI');
     const a = await account();
     const c = (await a.post('/api/conversations').set('Origin', origin).set('X-SJN-Request', '1'))
       .body.conversation;
@@ -288,7 +289,7 @@ describe('critical religious safety', () => {
       .post(endpoint)
       .set('Origin', origin)
       .set('X-SJN-Request', '1')
-      .send({ question: 'What is wudu?', requestId: reqId });
+      .send({ question: 'What is patience?', requestId: reqId });
     expect(r.status).toBe(200);
     expect(r.text).toContain('SYNTHETIC TEST ANSWER');
     expect(r.text).toContain('"type":"done"');
@@ -296,7 +297,7 @@ describe('critical religious safety', () => {
       .post(endpoint)
       .set('Origin', origin)
       .set('X-SJN-Request', '1')
-      .send({ question: 'What is wudu?', requestId: reqId });
+      .send({ question: 'What is patience?', requestId: reqId });
     expect(await MessageModel.countDocuments()).toBe(2);
     await a
       .patch('/api/profile')
@@ -307,14 +308,15 @@ describe('critical religious safety', () => {
       .post(endpoint)
       .set('Origin', origin)
       .set('X-SJN-Request', '1')
-      .send({ question: 'What is wudu?', requestId: randomUUID() });
+      .send({ question: 'What is patience?', requestId: randomUUID() });
     const answers = await MessageModel.find({ role: 'assistant' }).sort({ createdAt: 1 });
     expect(answers[0].marjaSnapshot).toBe('SISTANI');
-    expect(answers[0].citations[0].authority).toBe('SISTANI');
+    expect(answers[0].citations[0].authority).toBe('JAWAD_NAQVI');
     expect(answers[1].marjaSnapshot).toBe('ALI_KHAMENEI');
-    expect(answers[1].citations[0].authority).toBe('ALI_KHAMENEI');
+    expect(answers[1].citations[0].authority).toBe('JAWAD_NAQVI');
   });
-  it('no source produces no definitive fatwa', async () => {
+  it('Fiqh is deferred even when approved Fiqh sources exist', async () => {
+    await seedFixture('SISTANI');
     const a = await account();
     const c = (await a.post('/api/conversations').set('Origin', origin).set('X-SJN-Request', '1'))
       .body.conversation;
@@ -324,7 +326,8 @@ describe('critical religious safety', () => {
       .set('X-SJN-Request', '1')
       .send({ question: 'Is wudu required?', requestId: randomUUID() });
     const answer = await MessageModel.findOne({ role: 'assistant' });
-    expect(answer?.mode).toBe('insufficient');
+    expect(answer?.mode).toBe('guidance');
+    expect(answer?.content).toContain('not available in this phase');
     expect(answer?.citations).toHaveLength(0);
   });
   it('educational retrieval remains Jawad Naqvi for both Marjas', async () => {
@@ -337,5 +340,16 @@ describe('critical religious safety', () => {
       );
       expect(hits[0].authority).toBe('JAWAD_NAQVI');
     }
+  });
+  it('general educational search never falls back to Fiqh documents', async () => {
+    await seedFixture('SISTANI');
+    await seedFixture('JAWAD_NAQVI');
+    const hits = await new KnowledgeRetriever(testProviders.embeddings).retrieve(
+      'Explain ethical behavior',
+      'OTHER',
+      'SISTANI',
+    );
+    expect(hits).toHaveLength(1);
+    expect(hits[0].authority).toBe('JAWAD_NAQVI');
   });
 });

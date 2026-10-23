@@ -28,19 +28,49 @@ test('public site, onboarding, grounded chat, references, history and preference
   await expect(page.getByRole('heading', { name: 'Let’s get to know you.' })).toBeVisible();
   await page.getByLabel('Full name').fill('Ayesha Test');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Who is your Marja-e-Taqleed?' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'A language that feels like home.' }),
+  ).toBeVisible();
+  // Accounts saved at the former Marja step resume at language selection.
+  const legacyStep = await page.request.patch('/api/profile', {
+    headers: { Origin: 'http://localhost:5174', 'X-SJN-Request': '1' },
+    data: { onboardingStep: 2 },
+  });
+  expect(legacyStep.ok()).toBe(true);
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Who is your Marja-e-Taqleed?' })).toBeVisible();
-  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(
+    page.getByRole('heading', { name: 'A language that feels like home.' }),
+  ).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Sistani|Khamenei/ })).toHaveCount(0);
   await page.getByRole('radio', { name: /English/ }).check();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByRole('button', { name: 'Start chatting' }).click();
   await expect(page.getByRole('heading', { name: 'What’s on your mind today?' })).toBeVisible();
+  const composerBox = await page.getByLabel('Your question').boundingBox();
+  expect(composerBox!.y + composerBox!.height).toBeLessThan(page.viewportSize()!.height);
+  if (testInfo.project.name === 'desktop') {
+    await page.getByRole('button', { name: 'Collapse sidebar' }).click();
+    await expect(page.locator('.sidebar')).toBeHidden();
+    await page.getByRole('button', { name: 'Expand sidebar' }).click();
+    await expect(page.locator('.sidebar')).toBeVisible();
+  }
+  await page.getByRole('button', { name: /Knowledge & growth/ }).click();
+  await expect(page.getByLabel('Your question')).toHaveValue(
+    'What do the sources teach about education?',
+  );
+  await expect(page.getByLabel('Your question')).toBeFocused();
+  await page.getByLabel('Your question').fill('');
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
+  ).toEqual([]);
+  await page.getByRole('heading', { name: 'What’s on your mind today?' }).click();
+  await page.mouse.move(0, 0);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
   await page.screenshot({
     path: `.local/screenshots/chat-${testInfo.project.name}.png`,
     fullPage: true,
   });
-  await page.getByLabel('Your question').fill('What do approved sources say about wudu?');
+  await page.getByLabel('Your question').fill('What do the sources teach about patience?');
   await page.getByRole('button', { name: 'Send question', exact: true }).click();
   await expect(page.getByText('SYNTHETIC TEST ANSWER', { exact: false })).toBeVisible();
   await page.locator('.citation-card summary').click();
@@ -53,6 +83,30 @@ test('public site, onboarding, grounded chat, references, history and preference
     path: `.local/screenshots/answer-${testInfo.project.name}.png`,
     fullPage: true,
   });
+  await page.getByRole('button', { name: 'Ask a follow-up' }).click();
+  await expect(page.getByLabel('Your question')).toBeFocused();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect(
+    (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
+  ).toEqual([]);
+  if (testInfo.project.name === 'mobile')
+    await page.getByRole('button', { name: 'Open navigation' }).click();
+  const navigation =
+    testInfo.project.name === 'mobile' ? page.getByRole('dialog') : page.locator('.sidebar');
+  await navigation
+    .getByLabel('Search recent conversations on this page')
+    .fill('no-such-conversation');
+  await expect(navigation.getByText('No matches on this page. Try another title.')).toBeVisible();
+  await navigation.getByLabel('Search recent conversations on this page').fill('patience');
+  await expect(page.locator('.history-item:visible')).toHaveCount(1);
+  await navigation.getByLabel('Search recent conversations on this page').fill('');
+  if (testInfo.project.name === 'mobile') {
+    expect(
+      (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
+    ).toEqual([]);
+    await page.screenshot({ path: '.local/screenshots/navigation-mobile.png' });
+    await page.getByRole('button', { name: 'Close navigation' }).click();
+  }
   async function navigate(name: string) {
     if (testInfo.project.name === 'mobile')
       await page.getByRole('button', { name: 'Open navigation' }).click();
@@ -72,7 +126,7 @@ test('public site, onboarding, grounded chat, references, history and preference
     await page.getByRole('button', { name: 'Open navigation' }).click();
   await page.getByRole('link', { name: /Ayesha Test Your preferences/ }).click();
   await page.getByLabel('Full name').fill('Ayesha Updated');
-  await page.getByLabel('Marja-e-Taqleed').selectOption('ALI_KHAMENEI');
+  await expect(page.getByLabel('Marja-e-Taqleed')).toHaveCount(0);
   await page.getByRole('button', { name: 'Save preferences' }).click();
   await expect(page.getByText('Your preferences have been saved.', { exact: false })).toBeVisible();
   await page.reload();

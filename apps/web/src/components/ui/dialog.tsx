@@ -7,18 +7,20 @@ export function Dialog({
   title,
   description,
   children,
+  className = '',
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description?: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
     <D.Root open={open} onOpenChange={onOpenChange}>
       <D.Portal>
         <D.Overlay className="dialog-overlay" />
-        <D.Content className="dialog-content">
+        <D.Content className={`dialog-content ${className}`}>
           <D.Title>{title}</D.Title>
           <D.Description>{description || 'Review the details below.'}</D.Description>
           <D.Close className="dialog-close" aria-label="Close dialog">

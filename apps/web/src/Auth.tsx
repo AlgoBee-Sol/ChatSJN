@@ -14,6 +14,7 @@ import {
   EyeOff,
 } from 'lucide-react';
 import { type User, type Marja, type Language } from '@sjn/shared';
+import { FIQH_ENABLED } from '@sjn/shared/features';
 import { api, json } from './api';
 import { Logo, useAuth, Notice } from './App';
 import { Button } from './components/ui/button';
@@ -153,8 +154,8 @@ export function AuthPage({ register = false }: { register?: boolean }) {
           <div className="privacy-note">
             <ShieldCheck size={17} />
             <span>
-              Your account uses a secure session. Your profile and
-              conversations are saved privately to your account.
+              Your account uses a secure session. Your profile and conversations are saved privately
+              to your account.
             </span>
           </div>
         </div>
@@ -175,7 +176,10 @@ export function MarjaNotice() {
 export function Onboarding() {
   const { user, refresh } = useAuth(),
     navigate = useNavigate();
-  const [step, setStep] = useState(user!.onboardingStep),
+  const steps = FIQH_ENABLED ? [1, 2, 3, 4] : [1, 3, 4];
+  const [step, setStep] = useState(
+      !FIQH_ENABLED && user!.onboardingStep === 2 ? 3 : user!.onboardingStep,
+    ),
     [name, setName] = useState(user!.fullName),
     [age, setAge] = useState(user!.age),
     [gender, setGender] = useState(user!.gender),
@@ -195,15 +199,15 @@ export function Onboarding() {
           fullName: name,
           age,
           gender,
-          marja,
+          ...(FIQH_ENABLED ? { marja } : {}),
           language,
-          onboardingStep: Math.min(step + 1, 4),
+          onboardingStep: steps[Math.min(steps.indexOf(step) + 1, steps.length - 1)],
           complete: step === 4,
         }),
       });
       await refresh();
       if (step === 4) navigate('/app/chat');
-      else setStep(step + 1);
+      else setStep(steps[steps.indexOf(step) + 1]);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -218,15 +222,17 @@ export function Onboarding() {
       </header>
       <main id="main">
         <div className="onboarding-progress">
-          {['About you', 'Your Marja', 'Your language', 'Welcome'].map((s, i) => (
-            <div className={step >= i + 1 ? 'active' : ''} key={s}>
-              <span>{step > i + 1 ? <Check size={15} /> : i + 1}</span>
-              <small>{s}</small>
+          {steps.map((s, i) => (
+            <div className={step >= s ? 'active' : ''} key={s}>
+              <span>{step > s ? <Check size={15} /> : i + 1}</span>
+              <small>{['About you', 'Your Marja', 'Your language', 'Welcome'][s - 1]}</small>
             </div>
           ))}
         </div>
         <form className="onboarding-card" onSubmit={next}>
-          <span className="eyebrow">STEP {step} OF 4</span>
+          <span className="eyebrow">
+            STEP {steps.indexOf(step) + 1} OF {steps.length}
+          </span>
           <h1>
             {
               [
@@ -285,7 +291,7 @@ export function Onboarding() {
               <small>Private beta · Adults aged 18 and above.</small>
             </div>
           )}
-          {step === 2 && (
+          {FIQH_ENABLED && step === 2 && (
             <>
               <div className="choice-stack">
                 {Object.entries(MARJAS).map(([id, title]) => (
@@ -356,13 +362,22 @@ export function Onboarding() {
                 </div>
               </article>
               <div className="sample-question">
-                Try asking: “What do approved sources say about wudu?”
+                Try asking: “What do the sources teach about patience?”
               </div>
+              {!FIQH_ENABLED && (
+                <p>
+                  Aqaid, Akhlaq and Islamic education. Fiqh rulings are not available in this phase.
+                </p>
+              )}
             </div>
           )}
           <div className="onboarding-actions">
             {step > 1 ? (
-              <Button type="button" variant="ghost" onClick={() => setStep(step - 1)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setStep(steps[steps.indexOf(step) - 1])}
+              >
                 <ArrowLeft size={16} /> Back
               </Button>
             ) : (

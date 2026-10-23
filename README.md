@@ -8,17 +8,19 @@
 
 ![SJN AI desktop and mobile web showcase](docs/images/product-showcase.png)
 
-SJN brings a source-governed learning workspace, inspectable references, personal religious preferences, and an editorial review workflow into one web application. It supports **Urdu, English, and Roman Urdu**, with a responsive interface and right-to-left Urdu layouts.
+SJN brings a source-governed learning workspace, inspectable references, personal learning preferences, and an editorial review workflow into one web application. It supports **Urdu, English, and Roman Urdu**, with a responsive interface and right-to-left Urdu layouts.
 
 **Current status:** deployed web beta at [sjn-ai-beta.algobee-solutions.workers.dev](https://sjn-ai-beta.algobee-solutions.workers.dev). The hosted app uses a dedicated Cloudflare Worker, D1, private R2 and Workers AI. Email/password login, profiles, history and source review are implemented. Google OAuth awaits credentials. The hosted educational index contains 1,331 technically reviewed SJN website texts and 31,331 cited passages; see the [review scope and indexing report](docs/SOURCE_INDEXING.md). The original local Express/MongoDB app is preserved. See the [deployment and account-migration guide](docs/DEPLOYMENT.md).
 
 > SJN is an educational companion, not an official religious authority or a substitute for a qualified scholar. The normal database contains no preloaded religious sources or invented answers. Preview accounts and source records below are synthetic test fixtures.
 
+**Release scope:** educational-only, with Marja-free onboarding and explicit Fiqh deferral. Existing preferences, sources and historical citations are preserved. See [educational scope](docs/EDUCATIONAL_SCOPE.md).
+
 ## What you can do
 
 - **Learn in your language.** Choose Urdu, English, or Roman Urdu, with a responsive desktop and mobile workspace.
 - **Follow the evidence.** Inspect citations, original passages, source URLs, and publication details.
-- **Keep Fiqh sources specific to your Marja.** Retrieval enforces authority boundaries; educational sources retain their own attribution.
+- **Explore Aqaid, Akhlaq and Islamic education.** Answers use approved educational sources with clear attribution. Fiqh rulings and Marja selection are paused in the current source tree.
 - **Return to your conversations.** Save, rename, and revisit history while keeping earlier citation snapshots intact.
 - **Sign in securely.** Better Auth provides email/password accounts, Google OAuth, explicit account linking, and session revocation.
 - **Review before publishing.** Administrators import authorized PDF, TXT, or Markdown files, inspect extraction, and approve material before it can be retrieved.
@@ -26,6 +28,8 @@ SJN brings a source-governed learning workspace, inspectable references, persona
 ## Product preview
 
 These are screenshots of the implemented application, captured from the isolated browser-test database. The cover adds presentation frames; it does not represent an additional native mobile app.
+
+The learning room uses ink-blue navigation, warm paper surfaces and copper accents. A collapsible sidebar, searchable recent conversations, mobile navigation drawer and expandable citations keep questions and their sources easy to revisit. The composer appears before starter questions and stays within reach during a conversation. These previews reflect the local frontend; the hosted beta updates separately on deployment.
 
 | Learning workspace                                                                          | Source studio                                                                                                                |
 | ------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |

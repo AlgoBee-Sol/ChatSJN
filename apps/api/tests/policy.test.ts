@@ -11,6 +11,8 @@ import { cosine } from '../src/rag/retriever.js';
 import { chunkText, extract } from '../src/ingestion.js';
 import { profileSchema, registerSchema, sourceSchema, type Citation } from '@sjn/shared';
 import { syntheticPdf } from './fixtures.js';
+import { ChatService } from '../src/rag/chat-service.js';
+import type { User } from '@sjn/shared';
 const citation: Citation = {
   chunkId: 'c1',
   documentId: 'd1',
@@ -21,9 +23,49 @@ const citation: Citation = {
   section: 'Test',
   rulingNumber: 'TEST',
   version: '1',
-  authority: 'SISTANI',
+  authority: 'JAWAD_NAQVI',
 };
 describe('religious routing and answer safety', () => {
+  it.each([
+    ['Is prayer obligatory?', 'en'],
+    ['وضو کا طریقہ کیا ہے؟', 'ur'],
+    ['Kya yeh halal hai?', 'roman'],
+    ['Explain Tawhid and give a fatwa about prayer', 'en'],
+    ['Can I continue taqlid of Khamenei?', 'en'],
+  ] as const)(
+    'defers paused Fiqh without retrieval or generation: %s',
+    async (question, language) => {
+      const embed = vi.fn(),
+        generate = vi.fn();
+      const service = new ChatService({
+        configured: false,
+        embeddings: { model: 'test', embed },
+        llm: { generate },
+      });
+      const result = await service.answer(
+        { language, marja: 'SISTANI' } as User,
+        question,
+        'unused',
+      );
+      expect(result.content).toBe(messages.fiqhPaused[language]);
+      expect(result.mode).toBe('guidance');
+      expect(result.citations).toEqual([]);
+      expect(embed).not.toHaveBeenCalled();
+      expect(generate).not.toHaveBeenCalled();
+    },
+  );
+  it('also blocks Fiqh at the generator boundary with supplied evidence', async () => {
+    const generate = vi.fn();
+    const result = await new AnswerGenerator({ generate }).generate(
+      'prayer',
+      'en',
+      'SISTANI',
+      'FIQH',
+      [citation],
+    );
+    expect(result.mode).toBe('guidance');
+    expect(generate).not.toHaveBeenCalled();
+  });
   it.each([
     ['Is wudu required?', 'FIQH'],
     ['وضو کے بارے میں بتائیں', 'FIQH'],
@@ -63,10 +105,10 @@ describe('religious routing and answer safety', () => {
   it('never calls a model when evidence is absent', async () => {
     const generate = vi.fn();
     const answer = await new AnswerGenerator({ generate }).generate(
-      'wudu',
+      'patience',
       'en',
       'SISTANI',
-      'FIQH',
+      'AKHLAQ',
       [],
     );
     expect(generate).not.toHaveBeenCalled();
@@ -77,7 +119,8 @@ describe('religious routing and answer safety', () => {
     const generate = vi.fn(async (system: string, input: string) => {
       expect(system).toBe(ANSWER_POLICY);
       expect(system).toContain('UNTRUSTED DATA');
-      expect(JSON.parse(input).selectedMarja).toBe('SISTANI');
+      expect(JSON.parse(input).selectedMarja).toBeUndefined();
+      expect(system).toContain('Fiqh and Marja-specific advice are disabled');
       return {
         explanation: 'Attacker output',
         citationIds: ['wrong-authority'],
@@ -86,7 +129,7 @@ describe('religious routing and answer safety', () => {
       };
     });
     await expect(
-      new AnswerGenerator({ generate }).generate('wudu', 'en', 'SISTANI', 'FIQH', [citation]),
+      new AnswerGenerator({ generate }).generate('patience', 'en', 'SISTANI', 'AKHLAQ', [citation]),
     ).rejects.toThrow('not retrieved');
   });
   it('rejects fabricated direct quotations', async () => {
@@ -100,9 +143,9 @@ describe('religious routing and answer safety', () => {
         };
       },
     });
-    await expect(generator.generate('wudu', 'en', 'SISTANI', 'FIQH', [citation])).rejects.toThrow(
-      'quotation',
-    );
+    await expect(
+      generator.generate('patience', 'en', 'SISTANI', 'AKHLAQ', [citation]),
+    ).rejects.toThrow('quotation');
   });
   it('preserves originals while normalizing search text', () =>
     expect(normalize(' كِتاب  ي ')).toBe('کتاب ی'));

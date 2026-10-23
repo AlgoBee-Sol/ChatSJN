@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Citation, Topic, User } from '@sjn/shared';
+import { FIQH_ENABLED } from '@sjn/shared/features';
 import { AnswerGenerator } from '../../api/src/rag/generator.js';
 import { QuestionClassifier, SourceAuthorityResolver, messages } from '../../api/src/rag/policy.js';
 import { AppError } from '../../api/src/errors.js';
@@ -29,9 +30,9 @@ export async function retrieve(
 ): Promise<Citation[]> {
   const filter = new SourceAuthorityResolver().resolve(category, user.marja);
   const eligible = await env.DB.prepare(
-    "SELECT id FROM sources WHERE status='APPROVED' AND authority=? AND category=? AND EXISTS (SELECT 1 FROM json_each(data, '$.topics') WHERE value=?) LIMIT 1",
+    "SELECT id FROM sources WHERE status='APPROVED' AND authority=? AND category=? AND (?='OTHER' OR EXISTS (SELECT 1 FROM json_each(data, '$.topics') WHERE value=?)) LIMIT 1",
   )
-    .bind(filter.religiousAuthorityId, filter.sourceCategory, category)
+    .bind(filter.religiousAuthorityId, filter.sourceCategory, category, category)
     .first();
   if (!eligible) return [];
   // Translate only search keywords. Authority and topic filters never come from the model.
@@ -65,10 +66,10 @@ export async function retrieve(
     `SELECT c.id, c.data, c.embedding, c.embeddingModel, s.id AS documentId, s.data AS source
      FROM chunk_search JOIN chunks c ON c.rowid=chunk_search.rowid JOIN sources s ON s.id=c.documentId
      WHERE chunk_search MATCH ? AND s.status='APPROVED' AND s.authority=? AND s.category=?
-     AND EXISTS (SELECT 1 FROM json_each(s.data, '$.topics') WHERE value=?)
+     AND (?='OTHER' OR EXISTS (SELECT 1 FROM json_each(s.data, '$.topics') WHERE value=?))
      ORDER BY bm25(chunk_search) LIMIT 12`,
   )
-    .bind(expression, filter.religiousAuthorityId, filter.sourceCategory, category)
+    .bind(expression, filter.religiousAuthorityId, filter.sourceCategory, category, category)
     .all<{
       id: string;
       data: string;
@@ -124,9 +125,11 @@ export async function answer(env: Env, user: User, question: string, conversatio
     category = classifier.classify(question),
     language = classifier.language(question, user.language);
   const base = { category, language, marjaSnapshot: user.marja };
+  if (!FIQH_ENABLED && (category === 'FIQH' || classifier.deceasedTaqlid(question)))
+    return { ...base, content: messages.fiqhPaused[language], citations: [], mode: 'guidance' };
   if (classifier.deceasedTaqlid(question))
     return { ...base, content: messages.deceased[language], citations: [], mode: 'guidance' };
-  if (category === 'OTHER')
+  if (FIQH_ENABLED && category === 'OTHER')
     return { ...base, content: messages.clarify[language], citations: [], mode: 'clarification' };
   const evidence = await retrieve(env, question, category, user);
   const previous = await env.DB.prepare(

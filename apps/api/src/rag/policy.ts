@@ -14,14 +14,19 @@ export class QuestionClassifier {
   classify(question: string): Topic {
     const q = normalize(question);
     if (
-      /\b(pray|prayer|prayers|namaz|salah|salaat|wudu|wudhu|wuzu|ablution|fast|fasting|roza|rozay|khums|zakat|halal|haram|permissible|allowed|ruling|fatwa|taqlid|taqleed|ghusl|nikah|divorce|inheritance|najis|taharat|hajj)\b|نماز|وضو|روزہ|روزے|خمس|زکات|حلال|حرام|جائز|حکم|تقلید|غسل|نکاح|طلاق|نجس/.test(
+      /\b(fiqh|fiqhf|jurisprudence|marja|pray|prayer|prayers|namaz|salah|salaat|wudu|wudhu|wuzu|ablution|fast|fasting|roza|rozay|khums|zakat|halal|haram|permissible|allowed|ruling|fatwa|fatwas|taqlid|taqleed|ghusl|nikah|divorce|inheritance|najis|taharat|hajj|wajib|obligatory|mustahab|makruh)\b|فقہ|فتوی|مرجع|واجب|مکروہ|نماز|وضو|روزہ|روزے|خمس|زکات|حلال|حرام|جائز|حکم|تقلید|غسل|نکاح|طلاق|نجس/.test(
         q,
       )
     )
       return 'FIQH';
     if (/quran|qur'an|tafsir|surah|ayat|قرآن|تفسیر|سورہ|آیت/.test(q)) return 'QURAN';
     if (/hadith|hadees|حدیث/.test(q)) return 'HADITH';
-    if (/akhlaq|kindness|patience|sabr|honesty|gratitude|اخلاق|صبر|شکر/.test(q)) return 'AKHLAQ';
+    if (
+      /akhlaq|ikhlaq|kindness|patience|sabr|honesty|gratitude|education|learning|character|taleem|tarbiyat|اخلاق|صبر|شکر|تعلیم|تربیت|علم/.test(
+        q,
+      )
+    )
+      return 'AKHLAQ';
     if (/aqaid|belief|tawhid|imamat|imamate|عقائد|توحید|امامت/.test(q)) return 'AQAID';
     if (/history|karbala|historical|تاریخ|کربلا/.test(q)) return 'HISTORY';
     return 'OTHER';
@@ -45,7 +50,7 @@ export class SourceAuthorityResolver {
       approvalStatus: 'APPROVED',
       sourceCategory: category === 'FIQH' ? 'FIQH' : 'EDUCATIONAL',
       religiousAuthorityId: category === 'FIQH' ? marja : 'JAWAD_NAQVI',
-      topics: category,
+      ...(category === 'OTHER' ? {} : { topics: category }),
     } as const;
   }
 }
@@ -68,11 +73,17 @@ export class CitationValidator {
   }
 }
 export const messages = {
-  insufficient: {
-    en: 'I do not have enough relevant, approved source material to answer this reliably. Please consult the authorized office of your Marja or a qualified scholar. I will not infer a religious ruling from incomplete evidence.',
-    ur: 'اس سوال کا معتبر جواب دینے کے لیے منظور شدہ متعلقہ مصادر کافی نہیں ہیں۔ براہِ کرم اپنے مرجع کے مجاز دفتر یا کسی اہل عالم سے رجوع کریں۔ نامکمل شواہد سے شرعی حکم اخذ نہیں کیا جائے گا۔',
+  fiqhPaused: {
+    en: 'Fiqh and Marja-specific rulings are not available in this phase. SJN currently supports Aqaid, Akhlaq and other Islamic educational questions using approved sources. For a practical religious ruling, please consult a qualified scholar or an authorized religious office.',
+    ur: 'اس مرحلے میں فقہی احکام اور مرجع سے متعلق فتاویٰ دستیاب نہیں ہیں۔ SJN فی الحال منظور شدہ مصادر کی مدد سے عقائد، اخلاق اور دیگر اسلامی تعلیمی سوالات میں معاونت کرتا ہے۔ عملی شرعی حکم کے لیے کسی اہل عالم یا مجاز دینی دفتر سے رجوع کریں۔',
     roman:
-      'Is sawal ka mo’tabar jawab dene ke liye manzoor shuda mutaliqa sources kaafi nahin hain. Apne Marja ke mujaz daftar ya kisi ahl aalim se rujoo karein. Na-mukammal shawahid se sharai hukm akhaz nahin kiya jayega.',
+      'Is marhalay mein Fiqh aur Marja se mutaliq fatawa dastiyab nahin hain. SJN filhal manzoor shuda sources se Aqaid, Akhlaq aur doosray Islami taleemi sawalat mein madad karta hai. Amali sharai hukm ke liye kisi ahl aalim ya mujaz deeni daftar se rujoo karein.',
+  },
+  insufficient: {
+    en: 'I do not have enough relevant, approved source material to answer this reliably. Try a more specific educational question, or consult a qualified scholar. I will not fill gaps in the sources with an unsupported answer.',
+    ur: 'اس سوال کا معتبر جواب دینے کے لیے منظور شدہ متعلقہ مصادر کافی نہیں ہیں۔ اپنا تعلیمی سوال مزید واضح کریں یا کسی اہل عالم سے رجوع کریں۔ مصادر میں موجود خلا کو غیر مستند جواب سے پُر نہیں کیا جائے گا۔',
+    roman:
+      'Is sawal ka mo’tabar jawab dene ke liye manzoor shuda mutaliqa sources kaafi nahin hain. Apna taleemi sawal mazeed wazeh karein ya kisi ahl aalim se rujoo karein. Sources mein kami ko ghair mustanad jawab se poora nahin kiya jayega.',
   },
   clarify: {
     en: 'Could you clarify the Islamic topic and the specific question you would like to explore? For example, is this about a practical religious ruling, beliefs, Quran, history, or ethics?',

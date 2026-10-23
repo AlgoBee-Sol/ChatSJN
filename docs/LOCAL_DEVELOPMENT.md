@@ -2,7 +2,7 @@
 
 A polished, source-governed Islamic learning web application, version 0.1. Built as a pnpm workspace with React/TypeScript/Vite, Tailwind, shadcn-style Radix UI components, React Router, TanStack Query, Express, Better Auth, Mongoose, Zod and MongoDB.
 
-**Local beta, not yet deployed.** Real accounts, onboarding, conversations and editorial workflows work locally. AI requires your provider credentials and authorized, reviewed source material. The normal database has no synthetic religious sources, mock answers or preconfigured admin passwords.
+**Local Express/MongoDB variant.** Real accounts, onboarding, conversations and editorial workflows work locally. AI requires your provider credentials and authorized, reviewed source material. The normal database has no synthetic religious sources, mock answers or preconfigured admin passwords.
 
 ## Start locally
 
@@ -56,10 +56,10 @@ Enter the email and adult age when prompted. The password is hidden during input
 
 1. Obtain permission to use a short, authoritative PDF/TXT/Markdown source or transcript. No automated scraping is performed.
 2. Source studio → Import source. Enter exact title, scholar, category, authority, language, source URL, edition and version.
-3. Use Fiqh only for `SISTANI` or `ALI_KHAMENEI`; educational topics use `JAWAD_NAQVI`.
+3. Use the educational collection (`JAWAD_NAQVI`) and a matching Aqaid, Akhlaq, Quran, Hadith or history topic. Fiqh is currently paused.
 4. Inspect every extracted passage and PDF page reference. Mixed/scanned PDFs and bad encodings are marked failed; provide a manually verified transcript instead.
 5. With embeddings configured, check the review confirmation and choose **Approve & publish**. Only successful embedding and approval make it retrievable.
-6. Ask a relevant question from a learner account with the matching Marja. Expand the returned reference to inspect its original text, URL, version, page and ruling/section.
+6. Ask a relevant question from a learner account. Expand the returned reference to inspect its original text, URL, version, page and ruling/section.
 
 No supplied website link grants copyright permission. Published content cannot be silently reprocessed or overwritten. Unpublish removes it from future retrieval; prior conversation citations remain historical snapshots. Upload corrections as new source versions and unpublish superseded versions.
 

@@ -4,7 +4,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./display": "./src/display.ts"
+    "./display": "./src/display.ts",
+    "./features": "./src/features.ts"
   },
   "dependencies": {
     "zod": "^4.3.6"

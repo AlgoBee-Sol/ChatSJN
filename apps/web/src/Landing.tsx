@@ -15,10 +15,10 @@ import { Logo, useAuth } from './App';
 import { Button } from './components/ui/button';
 const subjects = [
   {
-    name: 'Fiqh & everyday life',
-    desc: 'Explore practical questions through your selected Marja.',
+    name: 'History & perspective',
+    desc: 'Explore Islamic history through attributed educational sources.',
     icon: Compass,
-    tag: 'PRACTICE',
+    tag: 'EXPLORE',
   },
   {
     name: 'Belief & understanding',
@@ -157,7 +157,7 @@ export function Landing() {
           <div>
             <Compass />
             <p>
-              Respectful of your Marja<small>Distinct authority. Clear attribution.</small>
+              Aqaid & Akhlaq first<small>Educational learning. Clear attribution.</small>
             </p>
           </div>
           <div>
@@ -213,8 +213,8 @@ export function Landing() {
             {[
               [
                 '01',
-                'Your faith, your preferences',
-                'Choose your Marja and preferred language. Fiqh sources stay specific to your selection.',
+                'Your questions, your language',
+                'Choose your preferred language and explore beliefs, ethics and Islamic education.',
               ],
               [
                 '02',
@@ -252,7 +252,7 @@ export function Landing() {
             ],
             [
               'How are different scholarly sources used?',
-              'Fiqh retrieval is restricted to your selected Marja: Ayatollah Sayyid Ali al-Sistani or Ayatollah Sayyid Ali Khamenei. Other Islamic education uses approved Syed Jawad Naqvi material and attributes interpretations to their source.',
+              'This phase uses approved educational material from Syed Jawad Naqvi’s website, with interpretations attributed to their sources. Aqaid, Akhlaq and other Islamic educational questions are supported when the sources provide evidence. Fiqh rulings and Marja selection are currently unavailable.',
             ],
             [
               'Can I use SJN in Urdu?',

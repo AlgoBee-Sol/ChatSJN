@@ -23,7 +23,7 @@ const structured = {
   operatingSystem: 'Web',
   inLanguage: ['en', 'ur'],
   description:
-    'An Islamic educational assistant with source attribution and Marja-specific Fiqh retrieval.',
+    'An Islamic educational assistant for Aqaid, Akhlaq and other non-Fiqh learning, with source attribution.',
 };
 if (site) {
   structured.url = site.origin;

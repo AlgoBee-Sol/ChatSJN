@@ -1,3 +1,4 @@
+import { FIQH_ENABLED } from '@sjn/shared/features';
 import { useState, type FormEvent } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -22,7 +23,7 @@ export function Admin() {
     [page, setPage] = useState(1),
     [upload, setUpload] = useState(false),
     [selected, setSelected] = useState(''),
-    [category, setCategory] = useState('FIQH'),
+    [category, setCategory] = useState(FIQH_ENABLED ? 'FIQH' : 'EDUCATIONAL'),
     [file, setFile] = useState<File | null>(null),
     [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
@@ -244,7 +245,7 @@ export function Admin() {
             <label>
               Knowledge collection
               <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="FIQH">Fiqh · Marja rulings</option>
+                {FIQH_ENABLED && <option value="FIQH">Fiqh · Marja rulings</option>}
                 <option value="EDUCATIONAL">Islamic education</option>
               </select>
             </label>

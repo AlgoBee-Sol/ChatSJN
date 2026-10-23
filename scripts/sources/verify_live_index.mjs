@@ -60,7 +60,7 @@ try {
     ['ur', 'اخلاق میں سچائی کی اہمیت کیا ہے؟', 'grounded'],
     ['en', 'What do the sources teach about honesty?', 'grounded'],
     ['roman', 'Akhlaq mein sabr ki ahmiyat kya hai?', 'grounded'],
-    ['en', 'What is the ruling for prayer?', 'insufficient'],
+    ['en', 'What is the ruling for prayer?', 'guidance'],
   ]) {
     await request('/api/profile', 'PATCH', { language });
     const conversation = (await (await request('/api/conversations', 'POST', {})).json())

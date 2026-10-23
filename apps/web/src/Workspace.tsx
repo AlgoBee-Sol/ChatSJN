@@ -1,6 +1,7 @@
 import { authClient, checkAuthError } from './auth-client';
 import { GoogleAccess } from './GoogleAccess';
 import { MARJAS, LANGUAGES } from '@sjn/shared/display';
+import { FIQH_ENABLED } from '@sjn/shared/features';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import {
   Link,
@@ -35,7 +36,10 @@ import {
   Pencil,
   ExternalLink,
   PanelLeftClose,
+  PanelLeftOpen,
+  ArrowRight,
 } from 'lucide-react';
+import './workspace.css';
 import ReactMarkdown from 'react-markdown';
 import {
   type User,
@@ -83,6 +87,8 @@ export function Workspace() {
     location = useLocation(),
     qc = useQueryClient();
   const [mobile, setMobile] = useState(false),
+    [collapsed, setCollapsed] = useState(false),
+    [historySearch, setHistorySearch] = useState(''),
     [page, setPage] = useState(1);
   const history = useQuery({
     queryKey: ['conversations', page],
@@ -98,7 +104,15 @@ export function Workspace() {
   const sidebar = (
     <>
       <div className="sidebar-brand">
-        <Logo />
+        <Logo light />
+        <button
+          className="icon-button desktop-toggle"
+          aria-label="Collapse sidebar"
+          aria-expanded={!collapsed}
+          onClick={() => setCollapsed(true)}
+        >
+          <PanelLeftClose size={18} />
+        </button>
         <button
           className="icon-button mobile-only"
           aria-label="Close navigation"
@@ -127,7 +141,19 @@ export function Workspace() {
         )}
       </nav>
       <div className="sidebar-history">
-        <span className="eyebrow">RECENT CONVERSATIONS</span>
+        <div className="history-heading">
+          <span className="eyebrow">YOUR NOTEBOOK</span>
+          <History size={14} />
+        </div>
+        <label className="sidebar-search">
+          <Search size={15} />
+          <input
+            aria-label="Search recent conversations on this page"
+            placeholder="Find a conversation…"
+            value={historySearch}
+            onChange={(e) => setHistorySearch(e.target.value)}
+          />
+        </label>
         {history.isLoading ? (
           <p className="muted">Loading conversations…</p>
         ) : history.isError ? (
@@ -135,24 +161,31 @@ export function Workspace() {
             Retry history
           </button>
         ) : history.data?.items.length ? (
-          history.data.items.map((c) => (
-            <Link
-              key={c._id}
-              to={`/app/chat/${c._id}`}
-              className={
-                location.pathname.includes(c._id) ? 'history-item selected' : 'history-item'
-              }
-            >
-              <MessageSquare size={15} />
-              <span>{c.title}</span>
-            </Link>
-          ))
+          history.data.items
+            .filter((c) => c.title.toLocaleLowerCase().includes(historySearch.toLocaleLowerCase()))
+            .map((c) => (
+              <Link
+                key={c._id}
+                to={`/app/chat/${c._id}`}
+                className={
+                  location.pathname.includes(c._id) ? 'history-item selected' : 'history-item'
+                }
+              >
+                <MessageSquare size={15} />
+                <span>{c.title}</span>
+              </Link>
+            ))
         ) : (
           <div className="history-empty">
-            Your conversations will find
-            <br />a home here.
+            <MessageSquare size={24} strokeWidth={1.3} />
+            <strong>A place for your questions.</strong>
+            <span>Your conversations will appear here, ready to return to.</span>
           </div>
         )}
+        {!!history.data?.items.length &&
+          !history.data.items.some((c) =>
+            c.title.toLocaleLowerCase().includes(historySearch.toLocaleLowerCase()),
+          ) && <p className="history-empty">No matches on this page. Try another title.</p>}
         {(history.data?.total || 0) > 25 && (
           <div className="pagination">
             <button disabled={page === 1} onClick={() => setPage(page - 1)}>
@@ -172,11 +205,8 @@ export function Workspace() {
         <div className="sidebar-note">
           <ShieldCheck size={20} />
           <div>
-            <strong>Grounded in sources</strong>
-            <p>
-              Understanding starts with
-              <br />a reference you can explore.
-            </p>
+            <strong>Curiosity, with a reference.</strong>
+            <p>Open the sources. Read the context. Build your understanding.</p>
           </div>
         </div>
         <NavLink to="/app/settings" className="profile-link">
@@ -194,11 +224,12 @@ export function Workspace() {
     </>
   );
   return (
-    <div className="workspace">
+    <div className={`workspace learning-shell ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <aside className="sidebar">{sidebar}</aside>
       <Dialog
         open={mobile}
         onOpenChange={setMobile}
+        className="navigation-dialog"
         title="Your workspace"
         description="Navigate your conversations and preferences."
       >
@@ -207,6 +238,16 @@ export function Workspace() {
       <div className="workspace-body">
         <header className="workspace-header">
           <div>
+            {collapsed && (
+              <button
+                className="icon-button desktop-toggle"
+                aria-label="Expand sidebar"
+                aria-expanded={false}
+                onClick={() => setCollapsed(false)}
+              >
+                <PanelLeftOpen size={20} />
+              </button>
+            )}
             <button
               className="icon-button mobile-only"
               aria-label="Open navigation"
@@ -215,7 +256,7 @@ export function Workspace() {
               <Menu size={22} />
             </button>
             <span className="workspace-breadcrumb">
-              Your space <span>/</span>{' '}
+              The learning room <span>/</span>{' '}
               <strong>
                 {location.pathname.includes('admin')
                   ? 'Source studio'
@@ -223,12 +264,12 @@ export function Workspace() {
                     ? 'Preferences'
                     : location.pathname.includes('history')
                       ? 'History'
-                      : 'A little more understanding'}
+                      : 'A new perspective'}
               </strong>
             </span>
           </div>
           <div className="header-status">
-            <span className="status-dot" /> Private beta <span className="header-divider" />
+            <span className="beta-label">BETA</span> <span className="header-divider" />
             <Languages size={16} />
             <span>{LANGUAGES[user!.language]}</span>
           </div>
@@ -311,6 +352,11 @@ export function Chat() {
   useEffect(() => {
     bottom.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history.data, draft, busy]);
+  useEffect(() => {
+    if (!input.current) return;
+    input.current.style.height = 'auto';
+    input.current.style.height = `${Math.min(input.current.scrollHeight, 180)}px`;
+  }, [question]);
   async function send(e: FormEvent) {
     e.preventDefault();
     if (!question.trim() || busy) return;
@@ -350,18 +396,18 @@ export function Chat() {
   const prompts =
     user!.language === 'ur'
       ? [
-          ['روزمرہ کے احکام', 'وضو کے بارے میں منظور شدہ مصادر کیا کہتے ہیں؟'],
+          ['علم اور تربیت', 'علم اور تعلیم کی اہمیت کے بارے میں بتائیں۔'],
           ['عقائد کو سمجھیں', 'توحید کے بارے میں مزید بتائیں۔'],
           ['اخلاق اور کردار', 'صبر کے بارے میں علمی مصادر کیا بتاتے ہیں؟'],
         ]
       : user!.language === 'roman'
         ? [
-            ['Rozmarra ke ahkam', 'Wuzu ke bare mein manzoor shuda sources kya kehte hain?'],
+            ['Ilm aur tarbiyat', 'Ilm aur taleem ki ahmiyat ke bare mein batayein.'],
             ['Aqaid ko samjhein', 'Tawhid ke bare mein mazeed batayein.'],
             ['Akhlaq aur kirdar', 'Sabr ke bare mein sources kya kehte hain?'],
           ]
         : [
-            ['Everyday practice', 'What do approved sources say about wudu?'],
+            ['Knowledge & growth', 'What do the sources teach about education?'],
             ['A deeper understanding', 'Help me explore the concept of Tawhid.'],
             ['A thoughtful life', 'What do scholarly sources teach about patience?'],
           ];
@@ -370,47 +416,32 @@ export function Chat() {
     <div className={`chat-page ${empty ? 'is-empty' : ''}`}>
       <div className="chat-context">
         <span>
-          <ShieldCheck size={15} /> Source-guided learning
+          <span className="context-mark">
+            <BookOpen size={15} />
+          </span>{' '}
+          Source-guided learning
         </span>
-        <Link to="/app/settings">
-          {user!.marja === 'SISTANI' ? 'Ayatollah al-Sistani' : 'Ayatollah Ali Khamenei'}
-          <ChevronDown size={14} />
-        </Link>
+        {FIQH_ENABLED ? (
+          <Link to="/app/settings">
+            {user!.marja === 'SISTANI' ? 'Ayatollah al-Sistani' : 'Ayatollah Ali Khamenei'}
+            <ChevronDown size={14} />
+          </Link>
+        ) : (
+          <span className="education-scope">Aqaid · Akhlaq · Learning</span>
+        )}
       </div>
       {empty ? (
         <section className="chat-welcome" dir={user!.language === 'ur' ? 'rtl' : 'ltr'}>
-          <div className="welcome-emblem">
-            <img src="/favicon.svg" alt="" />
+          <div className="welcome-art" aria-hidden="true">
+            <span />
+            <BookOpen size={30} strokeWidth={1.3} />
+            <span />
           </div>
           <span className="eyebrow">
             {t.greeting}, {user!.fullName.split(' ')[0]}
           </span>
           <h1>{t.heading}</h1>
           <p>{t.sub}</p>
-          <div className="prompt-grid">
-            {prompts.map(([title, q], i) => (
-              <button
-                key={title}
-                onClick={() => {
-                  setQuestion(q);
-                  input.current?.focus();
-                }}
-              >
-                <span className="prompt-icon">
-                  {i === 0 ? (
-                    <Compass size={21} />
-                  ) : i === 1 ? (
-                    <Sparkles size={21} />
-                  ) : (
-                    <BookOpen size={21} />
-                  )}
-                </span>
-                <strong>{title}</strong>
-                <span>{q}</span>
-                <ArrowUpRight size={16} className="prompt-arrow" />
-              </button>
-            ))}
-          </div>
         </section>
       ) : (
         <div className="message-list" aria-live="polite">
@@ -470,7 +501,8 @@ export function Chat() {
                 {m.citations.length > 0 && (
                   <div className="citations">
                     <span className="eyebrow">
-                      <BookOpen size={13} /> EXPLORE THE SOURCES
+                      <BookOpen size={14} /> EXPLORE THE SOURCES{' '}
+                      <span className="source-count">{m.citations.length}</span>
                     </span>
                     {m.citations.map((c, i) => (
                       <CitationCard key={c.chunkId} citation={c} index={i} />
@@ -495,8 +527,12 @@ export function Chat() {
                       {copied === m._id ? <Check size={14} /> : <Copy size={14} />}{' '}
                       {copied === m._id ? 'Copied' : 'Copy'}
                     </button>
+                    <button onClick={() => input.current?.focus()}>
+                      <MessageSquare size={14} /> Ask a follow-up
+                    </button>
                     <span>
-                      {m.marjaSnapshot === 'SISTANI' ? 'Sistani' : 'Ali Khamenei'} ·{' '}
+                      {FIQH_ENABLED &&
+                        `${m.marjaSnapshot === 'SISTANI' ? 'Sistani' : 'Ali Khamenei'} · `}
                       {LANGUAGES[m.language]}
                     </span>
                   </div>
@@ -569,13 +605,21 @@ export function Chat() {
             }}
           />
           <div className="composer-bottom">
-            <span>
-              <BookOpen size={15} /> A thoughtful conversation starts here
-            </span>
+            <Link
+              to="/app/settings"
+              className="composer-preferences"
+              aria-label={
+                FIQH_ENABLED
+                  ? 'Change answer language and Marja preferences'
+                  : 'Change answer language'
+              }
+            >
+              <Languages size={15} />
+              {LANGUAGES[user!.language]}
+              <ChevronDown size={13} />
+            </Link>
             <div>
-              <small>
-                {question.length ? `${question.length}/4000` : LANGUAGES[user!.language]}
-              </small>
+              <small>{question.length ? `${question.length}/4000` : 'Enter to send'}</small>
               <Button
                 type="submit"
                 size="icon"
@@ -592,6 +636,60 @@ export function Chat() {
           authority. Please verify important answers.
         </p>
       </div>
+      {empty && (
+        <section
+          className="chat-discover"
+          aria-label="Explore a question"
+          dir={user!.language === 'ur' ? 'rtl' : 'ltr'}
+        >
+          <div className="discovery-label">
+            <span />
+            {user!.language === 'ur'
+              ? 'ایک سوال سے آغاز کریں'
+              : user!.language === 'roman'
+                ? 'Aik sawal se shuru karein'
+                : 'A FEW PLACES TO BEGIN'}
+            <span />
+          </div>
+          <div className="prompt-grid">
+            {prompts.map(([title, q], i) => (
+              <button
+                key={title}
+                onClick={() => {
+                  setQuestion(q);
+                  input.current?.focus();
+                }}
+              >
+                <span className="prompt-icon">
+                  {i === 0 ? (
+                    <Compass size={21} />
+                  ) : i === 1 ? (
+                    <Sparkles size={21} />
+                  ) : (
+                    <BookOpen size={21} />
+                  )}
+                </span>
+                <strong>{title}</strong>
+                <span>{q}</span>
+                <ArrowUpRight size={16} className="prompt-arrow" />
+              </button>
+            ))}
+          </div>
+          <div className="welcome-footnote">
+            <ShieldCheck size={15} />
+            <span>
+              {user!.language === 'ur'
+                ? 'جواب کے ساتھ مصادر پڑھیں اور سیاق کو سمجھیں۔'
+                : user!.language === 'roman'
+                  ? 'Jawab ke saath sources parhein aur pas-e-manzar samjhein.'
+                  : 'An answer is a beginning. The sources take you further.'}
+            </span>
+          </div>
+          <Link className="notebook-link" to="/app/history">
+            Return to your notebook <ArrowRight size={14} />
+          </Link>
+        </section>
+      )}
     </div>
   );
 }
@@ -844,7 +942,7 @@ function SettingsPage() {
     try {
       await api<{ user: User }>('/profile', {
         method: 'PATCH',
-        body: json({ fullName: name, age, gender, marja, language }),
+        body: json({ fullName: name, age, gender, ...(FIQH_ENABLED ? { marja } : {}), language }),
       });
       await refresh();
       setStatus('Your preferences have been saved. New answers will use these settings.');
@@ -905,27 +1003,32 @@ function SettingsPage() {
         </section>
         <section className="settings-card">
           <div>
-            <h2>Religious preferences</h2>
+            <h2>Learning preferences</h2>
             <p>
-              Your Marja applies to Fiqh sources. Educational sources retain their own scholarly
-              attribution.
+              {FIQH_ENABLED
+                ? 'Your Marja applies to Fiqh sources. Educational sources retain their own scholarly attribution.'
+                : 'Explore Aqaid, Akhlaq and Islamic education in your preferred language. Fiqh rulings are not available in this phase.'}
             </p>
           </div>
-          <label>
-            Marja-e-Taqleed
-            <select value={marja} onChange={(e) => setMarja(e.target.value as Marja)}>
-              {Object.entries(MARJAS).map(([id, title]) => (
-                <option key={id} value={id}>
-                  {title}
-                  {id === 'ALI_KHAMENEI' ? ' (deceased, 2026)' : ''}
-                </option>
-              ))}
-            </select>
-          </label>
-          {marja === 'ALI_KHAMENEI' && <MarjaNotice />}
-          <small>
-            Changing your Marja affects new answers. Previous references remain unchanged.
-          </small>
+          {FIQH_ENABLED && (
+            <>
+              <label>
+                Marja-e-Taqleed
+                <select value={marja} onChange={(e) => setMarja(e.target.value as Marja)}>
+                  {Object.entries(MARJAS).map(([id, title]) => (
+                    <option key={id} value={id}>
+                      {title}
+                      {id === 'ALI_KHAMENEI' ? ' (deceased, 2026)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {marja === 'ALI_KHAMENEI' && <MarjaNotice />}
+              <small>
+                Changing your Marja affects new answers. Previous references remain unchanged.
+              </small>
+            </>
+          )}
           <label>
             Answer language
             <select value={language} onChange={(e) => setLanguage(e.target.value as Language)}>
