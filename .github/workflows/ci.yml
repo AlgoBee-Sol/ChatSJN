@@ -18,7 +18,11 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: python3 -m unittest discover -s scripts/sources -p 'test_*.py'
+      - run: node --test scripts/sources/*.test.mjs
+      - run: pnpm test:worker
       - run: pnpm build
+      - run: pnpm check:cloudflare
       - run: pnpm exec playwright install --with-deps chrome
       - run: pnpm test:e2e
       - uses: actions/upload-artifact@v4

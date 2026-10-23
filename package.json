@@ -4,12 +4,12 @@
   "type": "module",
   "packageManager": "pnpm@10.28.2",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=22.18"
   },
   "scripts": {
     "dev": "tsx scripts/dev.ts",
     "build": "pnpm --filter @sjn/web build && tsc -p apps/api/tsconfig.build.json",
-    "typecheck": "tsc -p apps/web/tsconfig.json && tsc -p apps/api/tsconfig.json",
+    "typecheck": "tsc -p apps/web/tsconfig.json && tsc -p apps/api/tsconfig.json && tsc -p apps/worker/tsconfig.json",
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
@@ -17,17 +17,28 @@
     "start": "tsx apps/api/src/index.ts",
     "format": "prettier --write .",
     "repo:check": "node scripts/check-repository.mjs",
-    "docs:mockups": "node scripts/generate-mockups.mjs"
+    "docs:mockups": "node scripts/generate-mockups.mjs",
+    "build:worker": "node scripts/build-worker.mjs",
+    "build:cloudflare": "pnpm --filter @sjn/web build && pnpm build:worker && node scripts/package-cloudflare.mjs",
+    "test:worker": "pnpm build:worker && node --test apps/worker/tests/runtime.test.mjs",
+    "deploy:cloudflare": "pnpm build:cloudflare && cf deploy --prebuilt --mode production",
+    "check:cloudflare": "pnpm build:cloudflare && cf deploy --prebuilt --mode production --dry-run"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@cloudflare/build-output-utils": "0.8.0",
+    "@cloudflare/config": "0.18.0",
+    "@cloudflare/workers-types": "^5.20261023.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.0",
     "@types/node": "^24.10.0",
     "argon2": "^0.44.0",
+    "cf": "0.15.0",
     "dotenv": "^17.2.3",
+    "esbuild": "^0.28.2",
     "eslint": "^10.13.0",
     "globals": "^16.5.0",
+    "miniflare": "^4.20260730.0",
     "mongodb-memory-server": "^10.3.0",
     "mongoose": "^9.1.5",
     "prettier": "^3.9.10",

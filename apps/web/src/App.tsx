@@ -75,7 +75,7 @@ export function App() {
     return (
       <div className="page-loader">
         <h1>Let’s reconnect.</h1>
-        <p>The local API is unavailable. Make sure the development server is running.</p>
+        <p>The service is temporarily unavailable. Please try again in a moment.</p>
         <Button onClick={() => auth.refetch()}>Try again</Button>
       </div>
     );

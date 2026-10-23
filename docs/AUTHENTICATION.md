@@ -51,3 +51,7 @@ The controlled `pnpm admin:create` command uses Better Auth to create credential
 Use the final HTTPS domain for `APP_ORIGIN`, register `https://YOUR-DOMAIN/api/auth/callback/google` in the production Google OAuth client, and store credentials and a persistent random `BETTER_AUTH_SECRET` in the hosting secret manager. Keep frontend and `/api/*` on one origin. Google consent branding, domain ownership and any applicable publishing requirements must be completed for the chosen audience. This change does not deploy or create a Google Cloud project.
 
 The Node/Mongoose/Argon2 architecture remains compatible with the planned Node origin/container option described in [deployment](DEPLOYMENT.md). A pure Cloudflare Worker would require a separate runtime/storage migration; adding Better Auth alone does not make the existing API a Worker.
+
+## Cloudflare hosted variant
+
+The hosted beta uses Better Auth with D1 and its portable default password hashing. Local MongoDB accounts retain Argon2id. The two account stores are independent. Both variants provide password changes under Your preferences and revoke other sessions after a password change. Hosted Google configuration, callback URL and secret management are documented in [deployment](DEPLOYMENT.md#enable-google-later). Email verification and email-based recovery are not enabled.

@@ -18,6 +18,20 @@ node_modules/
 *.sqlite-wal
 *.sqlite-shm
 
+# Source corpora and data exports must never be published (tooling stays in scripts/sources/)
+/sources/
+/source-data/
+/corpus/
+/datasets/
+/archives/
+/exports/
+*.jsonl
+*.ndjson
+*.csv
+*.tsv
+*.parquet
+*.pdf
+
 # Environment files and credentials; keep the documented, placeholder-only template
 .env
 .env.*
@@ -46,9 +60,12 @@ coverage/
 .vite/
 .turbo/
 .wrangler/
+.cloudflare/
 .vercel/
 .next/
 *.tsbuildinfo
+__pycache__/
+*.py[cod]
 
 # Automated test output; curated docs/images previews are intentionally committed
 playwright-report/

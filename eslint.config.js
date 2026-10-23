@@ -7,6 +7,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/node_modules/**',
       '.local/**',
+      '.cloudflare/**',
       'playwright-report/**',
       'test-results/**',
     ],

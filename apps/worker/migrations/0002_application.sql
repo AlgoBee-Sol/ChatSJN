@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY REFERENCES user(id) ON DELETE CASCADE, data TEXT NOT NULL CHECK(json_valid(data)));
+CREATE TABLE IF NOT EXISTS conversations (id TEXT PRIMARY KEY, userId TEXT NOT NULL REFERENCES user(id) ON DELETE CASCADE, title TEXT NOT NULL, createdAt TEXT NOT NULL, updatedAt TEXT NOT NULL, busyUntil INTEGER NOT NULL DEFAULT 0, lease TEXT);
+CREATE INDEX IF NOT EXISTS conversations_owner ON conversations(userId, updatedAt DESC);
+CREATE TABLE IF NOT EXISTS messages (id TEXT PRIMARY KEY, conversationId TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE, requestId TEXT NOT NULL, role TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), createdAt TEXT NOT NULL, UNIQUE(conversationId,requestId,role));
+CREATE INDEX IF NOT EXISTS messages_conversation ON messages(conversationId, createdAt);
+CREATE TABLE IF NOT EXISTS sources (id TEXT PRIMARY KEY, title TEXT NOT NULL, status TEXT NOT NULL, authority TEXT NOT NULL, category TEXT NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), fileKey TEXT NOT NULL, createdAt TEXT NOT NULL, lease TEXT, busyUntil INTEGER NOT NULL DEFAULT 0);
+CREATE INDEX IF NOT EXISTS sources_filter ON sources(status, authority, category);
+CREATE TABLE IF NOT EXISTS chunks (id TEXT PRIMARY KEY, documentId TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE, chunkIndex INTEGER NOT NULL, data TEXT NOT NULL CHECK(json_valid(data)), embedding TEXT, embeddingModel TEXT);
+CREATE INDEX IF NOT EXISTS chunks_source ON chunks(documentId, chunkIndex);
+CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, documentId TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE, data TEXT NOT NULL CHECK(json_valid(data)), createdAt TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS jobs_source ON jobs(documentId, createdAt DESC);
+CREATE TABLE IF NOT EXISTS audit_logs (id TEXT PRIMARY KEY, actorId TEXT NOT NULL, action TEXT NOT NULL, documentId TEXT NOT NULL, createdAt TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS usage_limits (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expiresAt INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS sessions_expiry ON session(expiresAt);
+CREATE INDEX IF NOT EXISTS verification_expiry ON verification(expiresAt);
+CREATE INDEX IF NOT EXISTS usage_expiry ON usage_limits(expiresAt);
+CREATE UNIQUE INDEX IF NOT EXISTS account_provider_identity ON account(providerId,accountId);

@@ -153,8 +153,8 @@ export function AuthPage({ register = false }: { register?: boolean }) {
           <div className="privacy-note">
             <ShieldCheck size={17} />
             <span>
-              Your account uses a secure session. This local beta stores your profile and
-              conversations on this server.
+              Your account uses a secure session. Your profile and
+              conversations are saved privately to your account.
             </span>
           </div>
         </div>

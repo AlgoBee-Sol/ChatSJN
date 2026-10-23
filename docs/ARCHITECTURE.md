@@ -1,5 +1,11 @@
 # Architecture and decisions
 
+## Hosted and local variants
+
+`apps/api` preserves the local Express/MongoDB implementation described below. `apps/worker` implements the same browser contract using Hono, Better Auth/D1, private R2 originals, unpdf extraction and Workers AI. It reuses the existing pure question/authority policy and answer validator. Hosted IDs are UUIDs; local IDs remain Mongo ObjectIds. Data is not automatically synchronized between variants. See [deployment](DEPLOYMENT.md) for operating limits, configuration and account migration.
+
+Hosted retrieval uses a D1 FTS5 external-content index over a normalized search copy of each passage. Original text is immutable and retained separately for citations. Publication, authority and topic filters run in SQL before selecting 12 candidates. A multilingual embedding model reranks this bounded set, caches candidate vectors by model, and returns up to five passages above the relevance threshold. A controlled bilingual vocabulary and bounded keyword expansion support lookup from English and Roman Urdu in the Urdu corpus. This avoids loading every vector into an isolate or embedding the full archive on import. It is a lexical-first retrieval design; cross-language and synonym recall need ongoing evaluation. See [source indexing](SOURCE_INDEXING.md).
+
 ## Boundaries
 
 The client consumes version-0.1 JSON REST endpoints and SSE over HTTP. Authority routing, approval checks, retrieval, model credentials, answer policy and provenance live on the server. Mobile clients can reuse these contracts; cookie/CSRF handling would need an explicit native-client authentication design before mobile release.

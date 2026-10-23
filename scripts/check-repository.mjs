@@ -37,6 +37,14 @@ function inspect(path, buffer, location) {
   }
 }
 for (const path of candidates) {
+  // Independent of .gitignore: also reject force-added corpus files and database dumps.
+  if (
+    /^(?:sources|source-data|corpus|datasets|archives|exports)\//i.test(path) ||
+    /\.(?:jsonl|ndjson|csv|tsv|parquet|pdf)(?:\.(?:gz|zip|bz2|xz))?$/i.test(path) ||
+    (/\.sql(?:\.(?:gz|zip|bz2|xz))?$/i.test(path) &&
+      !/^apps\/worker\/migrations\/\d{4}_[a-z0-9_]+\.sql$/.test(path))
+  )
+    issues.push(`${path}: source data or database export must stay outside Git`);
   if (tracked.has(path)) inspect(path, git('show', `:${path}`), 'Git index');
   let stat;
   try {

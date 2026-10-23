@@ -93,11 +93,18 @@ test('public site, onboarding, grounded chat, references, history and preference
     (await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze()).violations,
   ).toEqual([]);
   await page.goto('/app/settings');
+  await page.getByLabel('Current password', { exact: true }).fill('Synthetic-test-password-123');
+  await page.getByLabel('New password', { exact: true }).fill('Changed-synthetic-password-456');
+  await page
+    .getByLabel('Confirm new password', { exact: true })
+    .fill('Changed-synthetic-password-456');
+  await page.getByRole('button', { name: 'Change password', exact: true }).click();
+  await expect(page.getByText('Your password has been changed.', { exact: false })).toBeVisible();
   await page.getByRole('button', { name: 'Sign out everywhere' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Sign out everywhere' }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByLabel('Email address').fill(email);
-  await page.getByLabel('Password', { exact: true }).fill('Synthetic-test-password-123');
+  await page.getByLabel('Password', { exact: true }).fill('Changed-synthetic-password-456');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page).toHaveURL(/\/app\/chat$/);
   expect(errors).toEqual([]);

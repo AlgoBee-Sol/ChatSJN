@@ -2,7 +2,7 @@
   <img src="apps/web/public/favicon.svg" width="64" height="64" alt="SJN AI logo" />
   <h1>SJN AI</h1>
   <p><strong>Knowledge with purpose.</strong><br />A thoughtful space for source-guided Islamic learning.</p>
-  <p><strong>Web beta</strong> · React + TypeScript · Express + MongoDB · Better Auth</p>
+  <p><strong>Web beta</strong> · React + TypeScript · Cloudflare Workers + D1 · Local MongoDB · Better Auth</p>
   <p><a href="#quick-start">Run locally</a> · <a href="#product-preview">Product preview</a> · <a href="docs/ARCHITECTURE.md">Architecture</a> · <a href="docs/AUTHENTICATION.md">Google sign-in</a></p>
 </div>
 
@@ -10,7 +10,7 @@
 
 SJN brings a source-governed learning workspace, inspectable references, personal religious preferences, and an editorial review workflow into one web application. It supports **Urdu, English, and Roman Urdu**, with a responsive interface and right-to-left Urdu layouts.
 
-**Current status:** a locally tested web beta. Authentication, onboarding, profiles, conversation history, and source review work locally. AI answers require your provider credentials and approved source material; Google sign-in requires your OAuth credentials. Cloudflare hosting is planned and has not been deployed.
+**Current status:** deployed web beta at [sjn-ai-beta.algobee-solutions.workers.dev](https://sjn-ai-beta.algobee-solutions.workers.dev). The hosted app uses a dedicated Cloudflare Worker, D1, private R2 and Workers AI. Email/password login, profiles, history and source review are implemented. Google OAuth awaits credentials. The hosted educational index contains 1,331 technically reviewed SJN website texts and 31,331 cited passages; see the [review scope and indexing report](docs/SOURCE_INDEXING.md). The original local Express/MongoDB app is preserved. See the [deployment and account-migration guide](docs/DEPLOYMENT.md).
 
 > SJN is an educational companion, not an official religious authority or a substitute for a qualified scholar. The normal database contains no preloaded religious sources or invented answers. Preview accounts and source records below are synthetic test fixtures.
 
@@ -48,7 +48,7 @@ These are screenshots of the implemented application, captured from the isolated
 
 ## Quick start
 
-Requires **Node.js 22.13+** and **pnpm 10.28.2**. The first install/start needs internet to download dependencies and the development MongoDB binary.
+Requires **Node.js 22.18+** and **pnpm 10.28.2**. The first install/start needs internet to download dependencies and the development MongoDB binary.
 
 From your local checkout:
 
@@ -80,6 +80,8 @@ To create a reviewer account and import your first authorized source, follow [ad
 
 ## Architecture
 
+The diagram below describes local development. The hosted variant serves the same client/API contracts from Workers, stores accounts and conversations in D1, originals in private R2, and uses Workers AI. Shared authority and answer-validation policy serves both variants.
+
 ```mermaid
 flowchart LR
   Web[React web app] --> API[Express API]
@@ -107,7 +109,8 @@ flowchart LR
 
 ```text
 apps/web/             Public site, onboarding, learner workspace, source studio
-apps/api/             Authentication, API, retrieval, ingestion and tests
+apps/api/             Preserved local Express/MongoDB backend and tests
+apps/worker/          Hosted Workers/D1/R2 backend, migrations and runtime tests
 packages/shared/      Shared validation schemas and application types
 scripts/              Local launcher, admin setup, publishing audit, mockup capture
 tests/e2e/            Desktop/mobile journeys and disposable synthetic fixtures
@@ -123,6 +126,8 @@ pnpm repo:check       # Check publishable files for tracked ignores and credenti
 pnpm lint
 pnpm typecheck
 pnpm test            # Unit/API tests with disposable MongoDB
+pnpm test:worker     # Isolated workerd/D1/R2 integration tests
+pnpm check:cloudflare # Build and validate the hosted deployment without uploading
 pnpm test:e2e        # Desktop/mobile Chrome journeys and accessibility checks
 pnpm build           # Web build, public-page prerendering and API compilation
 pnpm docs:mockups    # Rebuild public previews from the synthetic E2E screenshots
@@ -139,6 +144,7 @@ Browser tests use installed Google Chrome, ports `5174`/`3002`, and a disposable
 | [Architecture](docs/ARCHITECTURE.md)           | Data model, security boundaries, persistence and trade-offs     |
 | [RAG pipeline](docs/RAG_PIPELINE.md)           | Classification, retrieval, generation and citation validation   |
 | [Source governance](docs/SOURCE_GOVERNANCE.md) | Rights, editorial review, provenance and publication            |
+| [Source extraction](docs/SOURCE_EXTRACTION.md) | Reproducible local website archive, coverage and review handoff |
 | [API](docs/API.md)                             | Authentication, profiles, conversations, source studio and SSE  |
 | [Testing](docs/TESTING.md)                     | Automated checks and what still requires live evaluation        |
 | [GitHub publishing](docs/PUBLISHING.md)        | Private files, repository audit and a clean first push          |

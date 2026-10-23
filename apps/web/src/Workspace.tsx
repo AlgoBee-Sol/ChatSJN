@@ -739,6 +739,87 @@ function HistoryPage() {
     </div>
   );
 }
+function PasswordSettings() {
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmation, setConfirmation] = useState('');
+  const [status, setStatus] = useState('');
+  const [busy, setBusy] = useState(false);
+  async function change(e: FormEvent) {
+    e.preventDefault();
+    if (newPassword !== confirmation) {
+      setStatus('The new passwords do not match.');
+      return;
+    }
+    setBusy(true);
+    setStatus('');
+    try {
+      checkAuthError(
+        await authClient.changePassword({
+          currentPassword,
+          newPassword,
+          revokeOtherSessions: true,
+        }),
+      );
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmation('');
+      setStatus('Your password has been changed. Other sessions have been signed out.');
+    } catch (error) {
+      setStatus((error as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="settings-card">
+      <div>
+        <h2>Change password</h2>
+        <p>Update the password for your email sign-in.</p>
+      </div>
+      {status && <Notice>{status}</Notice>}
+      <form onSubmit={change}>
+        <label>
+          Current password
+          <input
+            type="password"
+            autoComplete="current-password"
+            value={currentPassword}
+            onChange={(e) => setCurrentPassword(e.target.value)}
+            required
+            maxLength={128}
+          />
+        </label>
+        <label>
+          New password
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            required
+            minLength={12}
+            maxLength={128}
+          />
+        </label>
+        <label>
+          Confirm new password
+          <input
+            type="password"
+            autoComplete="new-password"
+            value={confirmation}
+            onChange={(e) => setConfirmation(e.target.value)}
+            required
+            minLength={12}
+            maxLength={128}
+          />
+        </label>
+        <small>Use at least 12 characters. Your other sessions will be signed out.</small>
+        <Button disabled={busy}>{busy ? 'Changing password…' : 'Change password'}</Button>
+      </form>
+    </section>
+  );
+}
 function SettingsPage() {
   const { user, refresh } = useAuth(),
     navigate = useNavigate(),
@@ -871,6 +952,7 @@ function SettingsPage() {
         </div>
         <GoogleAccess link />
       </section>
+      <PasswordSettings />
       <section className="settings-card session-card">
         <div>
           <h2>Account sessions</h2>
