@@ -21,6 +21,7 @@ async function request(
     headers: {
       Origin: originHeader,
       'X-SJN-Request': '1',
+      'CF-Connecting-IP': '192.0.2.10',
       ...(session ? { Cookie: session } : {}),
       ...(body && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
       ...extra,
@@ -454,4 +455,39 @@ test('session listings hide tokens, signout revokes session', async () => {
   assert.equal(listed.sessions[0].token, undefined);
   assert.equal((await request('/api/auth/sign-out', { method: 'POST', body: {} })).status, 200);
   assert.equal((await request('/api/auth/me')).status, 401);
+});
+
+test('D1 daily limits return temporary unavailability without provider details', async () => {
+  await db
+    .prepare(
+      `CREATE TRIGGER simulate_daily_limit BEFORE INSERT ON rateLimit
+    BEGIN SELECT RAISE(ABORT, 'Your account has exceeded D1''s free tier daily row write limit.'); END`,
+    )
+    .run();
+  try {
+    const response = await request('/api/auth/sign-up/email', {
+      method: 'POST',
+      session: '',
+      extra: { 'CF-Connecting-IP': '192.0.2.77' },
+      body: {
+        email: 'quota-check@example.test',
+        password: 'Synthetic-quota-check-123',
+        name: 'Learner',
+        age: 25,
+      },
+    });
+    assert.equal(response.status, 503);
+    const retryAfter = Number(response.headers.get('Retry-After'));
+    assert.ok(retryAfter > 0 && retryAfter <= 86400);
+    const body = await response.json();
+    assert.equal(body.error.code, 'TEMPORARILY_UNAVAILABLE');
+    assert.doesNotMatch(body.error.message, /D1|SQL|free tier|paid plan/i);
+    const row = await db
+      .prepare('SELECT COUNT(*) AS count FROM user WHERE email=?')
+      .bind('quota-check@example.test')
+      .first();
+    assert.equal(row.count, 0);
+  } finally {
+    await db.prepare('DROP TRIGGER simulate_daily_limit').run();
+  }
 });
