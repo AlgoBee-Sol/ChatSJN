@@ -1,0 +1,12 @@
+{
+  "name": "@sjn/shared",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./display": "./src/display.ts"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  }
+}

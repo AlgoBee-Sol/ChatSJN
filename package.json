@@ -1,0 +1,39 @@
+{
+  "name": "sjn-ai",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "build": "pnpm --filter @sjn/web build && tsc -p apps/api/tsconfig.build.json",
+    "typecheck": "tsc -p apps/web/tsconfig.json && tsc -p apps/api/tsconfig.json",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "admin:create": "tsx scripts/admin.ts",
+    "start": "tsx apps/api/src/index.ts",
+    "format": "prettier --write .",
+    "repo:check": "node scripts/check-repository.mjs",
+    "docs:mockups": "node scripts/generate-mockups.mjs"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.58.0",
+    "@types/node": "^24.10.0",
+    "argon2": "^0.44.0",
+    "dotenv": "^17.2.3",
+    "eslint": "^10.13.0",
+    "globals": "^16.5.0",
+    "mongodb-memory-server": "^10.3.0",
+    "mongoose": "^9.1.5",
+    "prettier": "^3.9.10",
+    "tsx": "^4.21.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.54.0",
+    "vitest": "^4.0.18"
+  }
+}

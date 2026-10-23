@@ -1,0 +1,79 @@
+# Dependencies and local package-manager stores
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/cache/
+.yarn/unplugged/
+
+# Local databases, uploads, generated secrets, screenshots and history backups
+.local/
+/data/
+/uploads/
+/backups/
+/dumps/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
+# Environment files and credentials; keep the documented, placeholder-only template
+.env
+.env.*
+!.env.example
+.envrc
+.dev.vars
+.dev.vars.*
+.credentials/
+credentials.json
+client_secret*.json
+*service-account*.json
+*firebase-adminsdk*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+
+# Build output, caches and hosting runtime state
+dist/
+.ssr/
+build/
+coverage/
+.cache/
+.vite/
+.turbo/
+.wrangler/
+.vercel/
+.next/
+*.tsbuildinfo
+
+# Automated test output; curated docs/images previews are intentionally committed
+playwright-report/
+test-results/
+blob-report/
+.nyc_output/
+*.log
+*.log.*
+
+# Private product notes and local agent/editor configuration
+/Reference.md
+/.agents/
+/.codex/
+/.claude/
+/.vscode/
+/.idea/
+*.code-workspace
+
+# Operating-system and temporary files
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+*.tmp
+*.bak

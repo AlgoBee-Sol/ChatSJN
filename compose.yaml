@@ -1,0 +1,10 @@
+# Optional local MongoDB alternative. pnpm dev also provides a persistent local database.
+services:
+  mongo:
+    image: mongo:8.0
+    ports:
+      - '127.0.0.1:27017:27017'
+    volumes:
+      - sjn-mongo:/data/db
+volumes:
+  sjn-mongo:

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SJN AI — product showcase</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 1600px;
+        height: 1000px;
+        overflow: hidden;
+        background: #e9ede4;
+        color: #173d34;
+        font-family: Arial, sans-serif;
+      }
+      canvas {
+        display: none;
+      }
+      .backdrop {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 90% 10%, #d3dece 0, transparent 55%);
+      }
+      .orbit {
+        position: absolute;
+        width: 1050px;
+        height: 1050px;
+        border: 1px solid #bbc9b7;
+        border-radius: 50%;
+        right: -410px;
+        top: -450px;
+        opacity: 0.45;
+      }
+      header {
+        position: absolute;
+        left: 76px;
+        right: 76px;
+        top: 52px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .brand img {
+        width: 43px;
+        height: 43px;
+      }
+      .tag {
+        font-size: 11px;
+        letter-spacing: 2.2px;
+        font-weight: 700;
+      }
+      h1 {
+        position: absolute;
+        left: 76px;
+        top: 110px;
+        margin: 0;
+        font:
+          54px/1.14 Georgia,
+          serif;
+        letter-spacing: -1.9px;
+      }
+      .intro {
+        position: absolute;
+        left: 835px;
+        top: 127px;
+        max-width: 540px;
+        font-size: 17px;
+        line-height: 1.65;
+        color: #506250;
+      }
+      .browser {
+        position: absolute;
+        left: 76px;
+        top: 272px;
+        width: 1220px;
+        height: 623px;
+        border-radius: 16px;
+        background: #fafaf7;
+        border: 1px solid #bdc9ba;
+        box-shadow: 0 32px 70px #284b3620;
+        overflow: hidden;
+      }
+      .bar {
+        height: 39px;
+        display: flex;
+        align-items: center;
+        padding: 0 16px;
+        gap: 6px;
+        background: #f2f4ef;
+        border-bottom: 1px solid #dce2d8;
+      }
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #bdc8b8;
+      }
+      .address {
+        margin: 0 auto;
+        transform: translateX(-20px);
+        color: #67745f;
+        font-size: 10px;
+        letter-spacing: 0.4px;
+      }
+      .browser > img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+      .phone {
+        position: absolute;
+        right: 76px;
+        top: 346px;
+        width: 264px;
+        height: 574px;
+        border: 8px solid #173d34;
+        background: #fafaf7;
+        border-radius: 35px;
+        overflow: hidden;
+        box-shadow: 0 24px 55px #173d3435;
+      }
+      .phone img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top;
+        display: block;
+      }
+      footer {
+        position: absolute;
+        bottom: 38px;
+        left: 76px;
+        right: 76px;
+        display: flex;
+        justify-content: space-between;
+        color: #596b53;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="orbit"></div>
+    <header>
+      <div class="brand"><img src="../../apps/web/public/favicon.svg" alt="" /> SJN AI</div>
+      <span class="tag">KNOWLEDGE WITH PURPOSE</span>
+    </header>
+    <h1>A clearer path.<br />A thoughtful place to learn.</h1>
+    <p class="intro">
+      Source-guided Islamic learning, with references<br />you can explore. Designed for the web.<br /><strong
+        >Urdu · English · Roman Urdu</strong
+      >
+    </p>
+    <div class="browser">
+      <div class="bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i
+        ><span class="address">SJN AI / Your learning journey</span>
+      </div>
+      <img src="../images/landing-desktop.png" alt="SJN public landing page" />
+    </div>
+    <div class="phone">
+      <img src="../images/chat-mobile.png" alt="Responsive SJN chat workspace" />
+    </div>
+    <footer>
+      <span>LOCAL WEB BETA · DESKTOP & MOBILE WEB</span
+      ><span>ACTUAL PRODUCT SCREENS · SYNTHETIC TEST DATA</span>
+    </footer>
+  </body>
+</html>
