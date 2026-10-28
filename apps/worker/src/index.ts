@@ -347,18 +347,20 @@ app.get('*', async (c) => {
     url.pathname = '/private/index.html';
   return c.env.ASSETS.fetch(new Request(url, c.req.raw));
 });
-app.onError((error, c) => {
-  if (
-    /Your account has exceeded D1's free tier daily row (?:read|write) limit\./.test(error.message)
-  ) {
+app.onError((cause, c) => {
+  const dailyLimit =
+    /Your account has exceeded D1's free tier daily row (?:read|write) limit\./.test(cause.message);
+  if (dailyLimit) {
     // D1 resets its daily allowance at midnight UTC. Do not expose provider details.
     c.header('Retry-After', String(86400 - (Math.floor(Date.now() / 1000) % 86400)));
-    error = new AppError(
-      503,
-      'TEMPORARILY_UNAVAILABLE',
-      'This service is temporarily unavailable. Please try again later.',
-    );
   }
+  const error = dailyLimit
+    ? new AppError(
+        503,
+        'TEMPORARILY_UNAVAILABLE',
+        'This service is temporarily unavailable. Please try again later.',
+      )
+    : cause;
   const known = error instanceof AppError,
     invalid = error instanceof ZodError || error instanceof SyntaxError;
   const status = known ? error.status : invalid ? 400 : 500;
