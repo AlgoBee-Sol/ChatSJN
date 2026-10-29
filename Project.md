@@ -105,7 +105,8 @@ The existing corpus received automated technical review with sampled inspection.
 - **Access and privacy:** Secure/HttpOnly session cookies, origin checks, user/admin roles and conversation ownership checks. Questions, selected passages and limited history are processed by Workers AI. Credentials and source archives remain outside Git; R2 originals are private.
 - **Availability:** Chat limits are 15 attempts per minute per user and 200 daily attempts across the beta. Cloudflare quotas also apply. Recognized D1 daily-limit errors return HTTP 503 with `Retry-After`; a read-only readiness check does not prove writes are available.
 - **Verified release:** Twelve Worker integration tests and release CI passed. Live checks covered login, multilingual answers, Fiqh deferral and desktop/mobile UI. All 15 sampled citations matched approved passages exactly.
-- **Pending integrations:** Google sign-in awaits credentials. Email verification/recovery delivery and the permanent account/domain remain pending. The beta is excluded from search-engine indexing.
+- **Google sign-in:** Enabled on the hosted beta on 30 October 2026 using the `algobee-sjn-ai` Google Cloud project. The client secret is stored as a Cloudflare Worker secret; existing password accounts connect Google explicitly in preferences.
+- **Pending integrations:** Email verification/recovery delivery and the permanent account/domain remain pending. The beta is excluded from search-engine indexing.
 - **Review priorities:** Evaluate scholarly accuracy, multilingual retrieval recall and the similarity threshold; test load, latency and quota budgets; rehearse backup restoration; review source rights and retention. Keyword classification and citation checks cannot guarantee every generated claim is supported. Durable ingestion jobs remain a scaling consideration.
 
 ## 7. Implementation references

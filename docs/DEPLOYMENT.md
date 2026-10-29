@@ -24,7 +24,7 @@ The current release uses the redesigned learning room and [educational-only scop
 
 Email/password registration, sessions, adult onboarding, preferences, conversation history and administrator source review use D1. Better Auth uses its portable default password hashing for hosted accounts; the local MongoDB version retains Argon2id. They are separate account databases. Original uploads use private R2; PDF extraction runs through `unpdf` in Workers. The shared classifier, authority rules and citation validator serve both backends.
 
-Google is deliberately disabled until the owner supplies OAuth credentials. The operator-authorized SJN website corpus is now managed through the [reviewed source-indexing workflow](SOURCE_INDEXING.md). Without approved evidence, the app returns an explicit insufficient-source message instead of generating a religious answer. The administrator account must complete its own onboarding. Its temporary login is recorded in `.local/cloudflare/admin-credentials.json`; change the password in **Your preferences → Change password** after first login. This file is not part of the repository.
+Google sign-in is enabled on the hosted beta as of 30 October 2026. The operator-authorized SJN website corpus is now managed through the [reviewed source-indexing workflow](SOURCE_INDEXING.md). Without approved evidence, the app returns an explicit insufficient-source message instead of generating a religious answer. The administrator account must complete its own onboarding. Its temporary login is recorded in `.local/cloudflare/admin-credentials.json`; change the password in **Your preferences → Change password** after first login. This file is not part of the repository.
 
 The temporary site sends `noindex, nofollow`, and `robots.txt` disallows crawling. Logs and sampled traces are enabled; application errors omit passwords, question text, source bodies and tokens. Request query strings are redacted in platform telemetry.
 
@@ -65,7 +65,13 @@ pnpm exec cf deploy --prebuilt --mode production --secrets-file .local/cloudflar
 
 Keep the production `BETTER_AUTH_SECRET` stable and backed up privately. Never replace it with a local development secret. Subsequent builds retain existing secrets unless explicitly replaced.
 
-## Enable Google later
+## Google sign-in
+
+Configured Google Cloud project: `algobee-sjn-ai` (project number `990231783495`), owned by `algobee.solutions@gmail.com`. OAuth client: **SJN AI Beta Web**, type **Web application**. The public client ID is in `cloudflare.config.ts`; `GOOGLE_CLIENT_SECRET` is an encrypted Worker secret and is also stored in the ignored, owner-only deployment secret file.
+
+The Google app is External / Testing and requests only `email profile openid`. Google's [basic-sign-in exception](https://support.google.com/cloud/answer/15549945#publishing-status-testing) allows these scopes without adding individual test users, without the testing warning, and without the seven-day authorization expiry. Adding other scopes requires revisiting audience and verification requirements. Branding/publication remains separate from enabling basic sign-in.
+
+For replacement credentials or a new hostname:
 
 1. Create a Google OAuth **Web application** client and configure its consent screen/testing audience.
 2. Add the authorized origin `https://sjn-ai-beta.algobee-solutions.workers.dev` and exact callback `https://sjn-ai-beta.algobee-solutions.workers.dev/api/auth/callback/google`.
@@ -100,6 +106,6 @@ Scheduled cleanup removes expired sessions, verification records and rate-limit 
 
 The Worker integration suite runs in local `workerd` with disposable D1/R2 and a separate AI fixture Worker. It checks origins, adult signup, role escalation, cross-user access, sessions, retries/leases, source extraction/review, PDF page attribution, citation retrieval and unpublishing. Synthetic material never enters the hosted knowledge base.
 
-Live checks cover deployment health, private-page routing, admin login, learner signup, persistence, authorization and responsive Chrome rendering. The account's real Workers AI generation and embedding models were invoked successfully with neutral test inputs. See [source indexing](SOURCE_INDEXING.md) for corpus review and live retrieval validation. Automated citation checks do not constitute scholarly certification. Live Google OAuth still awaits credentials.
+Live checks cover deployment health, private-page routing, admin login, learner signup, persistence, authorization and responsive Chrome rendering. The account's real Workers AI generation and embedding models were invoked successfully with neutral test inputs. See [source indexing](SOURCE_INDEXING.md) for corpus review and live retrieval validation. Automated citation checks do not constitute scholarly certification. Google credentials were deployed on 30 October 2026; see [testing](TESTING.md) for the verified OAuth flow and any remaining checks.
 
 References: [Cloudflare project deployments](https://developers.cloudflare.com/cf/projects/), [D1](https://developers.cloudflare.com/d1/), [Workers AI models](https://developers.cloudflare.com/workers-ai/models/), [Better Auth](https://better-auth.com/docs/introduction).

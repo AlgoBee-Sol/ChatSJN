@@ -1,7 +1,7 @@
 import { bindings, defineConfig, triggers } from 'cf/config';
 
 // This public OAuth client ID enables the required server-side Google secret when set.
-const googleClientId = '';
+const googleClientId = '990231783495-f0c5lve2cs0m2jk30iliarjpcvs29t9t.apps.googleusercontent.com';
 
 // Dedicated beta resources. Change these IDs and the origin when moving accounts.
 export default defineConfig({
