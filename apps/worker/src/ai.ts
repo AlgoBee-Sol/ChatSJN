@@ -34,30 +34,34 @@ export async function retrieve(
   )
     .bind(filter.religiousAuthorityId, filter.sourceCategory, category, category)
     .first();
-  if (!eligible) return [];
+  const broaden = () =>
+    category !== 'OTHER' && category !== 'FIQH'
+      ? retrieve(env, question, 'OTHER', user)
+      : Promise.resolve([] as Citation[]);
+  if (!eligible) return broaden();
   // Translate only search keywords. Authority and topic filters never come from the model.
   const known = knownUrduKeywords(question);
   let terms = `${known.join(' ')} ${question}`;
   if (!known.length && !/[\u0600-\u06ff]/.test(question)) {
-    const translated: unknown = await env.AI.run(GENERATION_MODEL, {
-      messages: [
-        {
-          role: 'system',
-          content:
-            'Translate the specific concepts asked about into Urdu written in Arabic script. Input may be English or Roman Urdu. Return ONLY 1 to 3 Urdu search terms separated by commas. Every term must contain Urdu/Arabic letters: for example education becomes تعلیم. Convert Roman Urdu into Urdu script, not English. Exclude general topic labels and loosely related concepts. No answer, JSON, numbering or commentary.',
-        },
-        { role: 'user', content: JSON.stringify({ searchQuestion: question }) },
-      ],
-      max_tokens: 90,
-      temperature: 0,
-    });
     try {
+      const translated: unknown = await env.AI.run(GENERATION_MODEL, {
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Translate the specific concepts asked about into Urdu written in Arabic script. Input may be English or Roman Urdu. Return ONLY 1 to 3 Urdu search terms separated by commas. Every term must contain Urdu/Arabic letters: for example education becomes تعلیم. Convert Roman Urdu into Urdu script, not English. Exclude general topic labels and loosely related concepts. No answer, JSON, numbering or commentary.',
+          },
+          { role: 'user', content: JSON.stringify({ searchQuestion: question }) },
+        ],
+        max_tokens: 90,
+        temperature: 0,
+      });
       const response = z
         .object({ response: z.union([z.string(), z.record(z.string(), z.unknown())]) })
         .parse(translated).response;
       terms = `${extractUrduKeywords(response).join(' ')} ${question}`;
     } catch {
-      /* Original-language search remains available if translation is malformed. */
+      /* Optional translation must not block original-language search on provider failure. */
     }
   }
   const expression = searchExpression(terms);
@@ -78,7 +82,7 @@ export async function retrieve(
       documentId: string;
       source: string;
     }>();
-  if (!rows.results.length) return [];
+  if (!rows.results.length) return broaden();
   const missing = rows.results.filter(
     (row) => row.embeddingModel !== EMBEDDING_MODEL || !row.embedding,
   );
@@ -97,7 +101,7 @@ export async function retrieve(
         );
       }),
     );
-  return rows.results
+  const ranked = rows.results
     .map((row) => ({ row, score: cosine(JSON.parse(row.embedding!), vector) }))
     .filter(({ score }) => score >= 0.45)
     .sort((a, b) => b.score - a.score)
@@ -119,6 +123,7 @@ export async function retrieve(
         authority: source.religiousAuthorityId,
       };
     });
+  return ranked.length ? ranked : broaden();
 }
 export async function answer(env: Env, user: User, question: string, conversationId: string) {
   const classifier = new QuestionClassifier(),
@@ -129,7 +134,7 @@ export async function answer(env: Env, user: User, question: string, conversatio
     return { ...base, content: messages.fiqhPaused[language], citations: [], mode: 'guidance' };
   if (classifier.deceasedTaqlid(question))
     return { ...base, content: messages.deceased[language], citations: [], mode: 'guidance' };
-  if (FIQH_ENABLED && category === 'OTHER')
+  if (classifier.needsClarification(question))
     return { ...base, content: messages.clarify[language], citations: [], mode: 'clarification' };
   const evidence = await retrieve(env, question, category, user);
   const previous = await env.DB.prepare(
@@ -143,7 +148,7 @@ export async function answer(env: Env, user: User, question: string, conversatio
         messages: [
           {
             role: 'system',
-            content: `${system} For this interface return quotes: []. Language codes: roman means Roman Urdu (Urdu written with Latin letters), ur means Urdu in Arabic script, en means English. Historical sources reflect their publication context.`,
+            content: `${system} For this interface return quotes: []. Language codes: roman means Roman Urdu (Urdu written with Latin letters), ur means Urdu in Arabic script, en means English. Historical sources reflect their publication context. Required explanation language for THIS request: ${language === 'roman' ? 'Roman Urdu, written entirely in Latin letters. Transliterate Urdu source concepts; do not copy Arabic-script text into explanation.' : language === 'ur' ? 'Urdu in Arabic script.' : 'English.'}`,
           },
           { role: 'user', content: input },
         ],

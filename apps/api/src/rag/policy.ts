@@ -11,6 +11,19 @@ export function normalize(text: string) {
     .trim();
 }
 export class QuestionClassifier {
+  needsClarification(question: string) {
+    // Unknown subject matter is not ambiguity. Only match requests with no subject
+    // or an unresolved reference; never use the topic label as a clarity test.
+    const q = normalize(question)
+      .replace(/[^\p{L}\p{N}\s]/gu, '')
+      .trim();
+    return (
+      !q ||
+      /^(?:what|why|how|explain|tell me|help|what about (?:it|this|that)|explain (?:it|this|that)|tell me about (?:it|this|that)|کیا|کیوں|کیسے|بتائیں|وضاحت کریں|اس کے بارے میں بتائیں|یہ کیا ہے|kya|kyun|kaise|batayein|is ke bare mein batayein|yeh kya hai)$/.test(
+        q,
+      )
+    );
+  }
   classify(question: string): Topic {
     const q = normalize(question);
     if (
@@ -80,16 +93,16 @@ export const messages = {
       'Is marhalay mein Fiqh aur Marja se mutaliq fatawa dastiyab nahin hain. SJN filhal manzoor shuda sources se Aqaid, Akhlaq aur doosray Islami taleemi sawalat mein madad karta hai. Amali sharai hukm ke liye kisi ahl aalim ya mujaz deeni daftar se rujoo karein.',
   },
   insufficient: {
-    en: 'I do not have enough relevant, approved source material to answer this reliably. Try a more specific educational question, or consult a qualified scholar. I will not fill gaps in the sources with an unsupported answer.',
-    ur: 'اس سوال کا معتبر جواب دینے کے لیے منظور شدہ متعلقہ مصادر کافی نہیں ہیں۔ اپنا تعلیمی سوال مزید واضح کریں یا کسی اہل عالم سے رجوع کریں۔ مصادر میں موجود خلا کو غیر مستند جواب سے پُر نہیں کیا جائے گا۔',
+    en: 'I could not verify a reliable answer in the available approved sources. A source title or relevant passage may help locate the evidence. I will not fill gaps in the sources with an unsupported answer.',
+    ur: 'دستیاب منظور شدہ مصادر میں اس سوال کے معتبر جواب کی تصدیق نہیں ہو سکی۔ کسی مصدر کا عنوان یا متعلقہ عبارت شواہد تلاش کرنے میں مدد دے سکتی ہے۔ مصادر میں موجود خلا کو غیر مستند جواب سے پُر نہیں کیا جائے گا۔',
     roman:
-      'Is sawal ka mo’tabar jawab dene ke liye manzoor shuda mutaliqa sources kaafi nahin hain. Apna taleemi sawal mazeed wazeh karein ya kisi ahl aalim se rujoo karein. Sources mein kami ko ghair mustanad jawab se poora nahin kiya jayega.',
+      'Dastiyab manzoor shuda sources mein is sawal ke motabar jawab ki tasdeeq nahin ho saki. Kisi source ka unwan ya mutaliqa ibarat shawahid talash karne mein madad de sakti hai. Sources mein kami ko ghair mustanad jawab se poora nahin kiya jayega.',
   },
   clarify: {
-    en: 'Could you clarify the Islamic topic and the specific question you would like to explore? For example, is this about a practical religious ruling, beliefs, Quran, history, or ethics?',
-    ur: 'براہِ کرم اسلامی موضوع اور اپنا مخصوص سوال واضح کریں۔ کیا آپ شرعی حکم، عقائد، قرآن، تاریخ یا اخلاق کے بارے میں پوچھ رہے ہیں؟',
+    en: 'What subject, event, or passage does your question refer to? Please name it so I can search the approved sources.',
+    ur: 'آپ کا سوال کس موضوع، واقعے یا عبارت سے متعلق ہے؟ براہِ کرم اس کا نام بتائیں تاکہ منظور شدہ مصادر میں تلاش کی جا سکے۔',
     roman:
-      'Barah-e-karam Islami mauzu aur apna khaas sawal wazeh karein. Kya aap sharai hukm, aqaid, Quran, tareekh ya akhlaq ke bare mein pooch rahe hain?',
+      'Aap ka sawal kis mauzu, waqia ya ibarat se mutaliq hai? Barah-e-karam us ka naam batayein taake manzoor shuda sources mein talash ki ja sake.',
   },
   deceased: {
     en: 'Questions about commencing or continuing Taqlid of a deceased Marja require qualified religious guidance. Ayatollah Sayyid Ali Khamenei died in 2026; this application can reference approved published rulings, but does not decide your eligibility to follow a deceased authority. Please consult an authorized office or a qualified scholar.',

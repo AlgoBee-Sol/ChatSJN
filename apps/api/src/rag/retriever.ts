@@ -16,7 +16,11 @@ export class KnowledgeRetriever {
     const documents = await SourceDocument.find(
       new SourceAuthorityResolver().resolve(category, marja),
     ).lean();
-    if (!documents.length) return [];
+    const broaden = () =>
+      category !== 'OTHER' && category !== 'FIQH'
+        ? this.retrieve(question, 'OTHER', marja)
+        : Promise.resolve([] as Citation[]);
+    if (!documents.length) return broaden();
     const chunks = await SourceChunk.find({
       documentId: { $in: documents.map((d) => d._id) },
       embeddingModel: this.embeddings.model,
@@ -30,7 +34,7 @@ export class KnowledgeRetriever {
         'The local search index has reached its supported capacity.',
       );
     const [vector] = await this.embeddings.embed([question]);
-    return chunks
+    const ranked = chunks
       .map((c) => ({ c, score: cosine(c.embedding, vector) }))
       .filter((x) => x.score >= config.RAG_MIN_SCORE)
       .sort((a, b) => b.score - a.score)
@@ -51,5 +55,6 @@ export class KnowledgeRetriever {
           authority: d.religiousAuthorityId,
         };
       });
+    return ranked.length ? ranked : broaden();
   }
 }

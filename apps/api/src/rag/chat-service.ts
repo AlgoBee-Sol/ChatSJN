@@ -15,6 +15,8 @@ export class ChatService {
     const base = { category, language, marjaSnapshot: user.marja };
     if (!FIQH_ENABLED && (category === 'FIQH' || classifier.deceasedTaqlid(question)))
       return { ...base, content: messages.fiqhPaused[language], citations: [], mode: 'guidance' };
+    if (classifier.needsClarification(question))
+      return { ...base, content: messages.clarify[language], citations: [], mode: 'clarification' };
     if (!this.providers.configured)
       throw new AppError(
         503,
@@ -23,8 +25,6 @@ export class ChatService {
       );
     if (classifier.deceasedTaqlid(question))
       return { ...base, content: messages.deceased[language], citations: [], mode: 'guidance' };
-    if (FIQH_ENABLED && category === 'OTHER')
-      return { ...base, content: messages.clarify[language], citations: [], mode: 'clarification' };
     const evidence = await new KnowledgeRetriever(this.providers.embeddings).retrieve(
       question,
       category,

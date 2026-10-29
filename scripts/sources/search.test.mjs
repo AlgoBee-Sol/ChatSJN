@@ -40,3 +40,16 @@ test('normalization handles Arabic variants while FTS syntax stays inert and bou
     8,
   );
 });
+
+test('Iran theories retain discriminating terms across Urdu, English and Roman Urdu', () => {
+  for (const question of [
+    'ایران کے اندر عظیم انقلاب کے رونما ہونے کے سلسلے میں کیا راجح اور چند غیر راجح نظریات پائے جاتے ہیں؟',
+    'What prevalent and less prevalent theories explain the emergence of the revolution in Iran?',
+    'Iran mein inqilab ke barpa hone ke mutaliq raij aur ghair raij nazriyat kya hain?',
+  ]) {
+    const expression = searchExpression([...knownUrduKeywords(question), question].join(' '));
+    for (const term of ['ایران', 'انقلاب', 'نظریات']) assert.ok(expression.includes(`"${term}"`));
+    assert.ok(expression.split(' OR ').length <= 8);
+  }
+  assert.deepEqual(knownUrduKeywords('راجح ghair rajih'), []);
+});

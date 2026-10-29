@@ -6,6 +6,9 @@ import { randomUUID } from 'node:crypto';
 import { initializeAuth, authCollections } from '../src/auth-engine.js';
 import { createApp } from '../src/app.js';
 import { UserModel, SourceChunk, MessageModel, initModels } from '../src/models.js';
+import { ChatService } from '../src/rag/chat-service.js';
+import { SourceDocument } from '../src/models.js';
+import type { User } from '@sjn/shared';
 import { KnowledgeRetriever } from '../src/rag/retriever.js';
 import { seedFixture, testProviders } from './fixtures.js';
 let mongo: MongoMemoryServer;
@@ -339,6 +342,36 @@ describe('critical religious safety', () => {
         m,
       );
       expect(hits[0].authority).toBe('JAWAD_NAQVI');
+    }
+  });
+  it.each([
+    'ایران کے اندر عظیم انقلاب کے رونما ہونے کے سلسلے میں کیا راجح اور چند غیر راجح نظریات پائے جاتے ہیں؟',
+    'What prevalent and less prevalent theories explain the emergence of the revolution in Iran?',
+    'Iran mein inqilab ke barpa hone ke mutaliq raij aur ghair raij nazriyat kya hain?',
+    'Explain social alienation',
+  ])('answers explicit unclassified questions through Mongo retrieval: %s', async (question) => {
+    const target = await seedFixture('JAWAD_NAQVI');
+    await seedFixture('JAWAD_NAQVI', 'DRAFT');
+    const result = await new ChatService(testProviders).answer(
+      { language: 'ur', marja: 'SISTANI' } as User,
+      question,
+      new mongoose.Types.ObjectId().toString(),
+    );
+    expect(result.mode).toBe('grounded');
+    expect(result.category).toBe('OTHER');
+    expect(result.citations.map((c) => c.documentId)).toEqual([target.doc.id]);
+  });
+  it('retries educational topic misses without weakening authority or approval', async () => {
+    const target = await seedFixture('JAWAD_NAQVI');
+    const wrongTopic = await seedFixture('JAWAD_NAQVI');
+    await SourceDocument.updateOne({ _id: wrongTopic.doc.id }, { topics: ['HISTORY'] });
+    await SourceChunk.updateOne({ _id: wrongTopic.chunk.id }, { embedding: [0, 1, 0] });
+    await seedFixture('JAWAD_NAQVI', 'DRAFT');
+    await seedFixture('SISTANI');
+    const retriever = new KnowledgeRetriever(testProviders.embeddings);
+    for (const topic of ['HISTORY', 'QURAN'] as const) {
+      const hits = await retriever.retrieve('chronometry', topic, 'SISTANI');
+      expect(hits.map((c) => c.documentId)).toEqual([target.doc.id]);
     }
   });
   it('general educational search never falls back to Fiqh documents', async () => {

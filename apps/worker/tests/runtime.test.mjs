@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { Miniflare } from 'miniflare';
 import { createHash, randomBytes } from 'node:crypto';
 import { pdfFixture } from './pdf-fixture.mjs';
+import { normalizeSearch } from '../src/search.ts';
 
 let mf, db, cookie, otherCookie, conversationId, sourceId;
 const origin = 'http://localhost:8787';
@@ -447,6 +448,169 @@ test('large full-text corpus, bounded embedding cache, safe query syntax and arc
     method: 'POST',
     body: { action: 'unpublish' },
   });
+});
+
+// These are synthetic retrieval fixtures, not assertions about religious history.
+test('question clarity, multilingual recall, topic fallback and citation safety', async () => {
+  await db.prepare('DELETE FROM usage_limits').run();
+  const seeded = [];
+  async function seed(
+    text,
+    {
+      status = 'APPROVED',
+      category = 'EDUCATIONAL',
+      authority = 'JAWAD_NAQVI',
+      topics = ['AKHLAQ'],
+    } = {},
+  ) {
+    const id = crypto.randomUUID(),
+      chunkId = crypto.randomUUID();
+    const source = {
+      _id: id,
+      title: 'Synthetic question regression',
+      scholar: 'Test author',
+      originalSourceURL: 'https://example.test/regression',
+      version: 'test',
+      topics,
+      approvalStatus: status,
+      sourceCategory: category,
+      religiousAuthorityId: authority,
+    };
+    const chunk = {
+      _id: chunkId,
+      chunkIndex: 0,
+      originalText: text,
+      section: 'Synthetic',
+      rulingNumber: '',
+    };
+    await db
+      .prepare(
+        'INSERT INTO sources(id,title,status,authority,category,data,fileKey,createdAt) VALUES(?,?,?,?,?,?,?,?)',
+      )
+      .bind(
+        id,
+        source.title,
+        status,
+        authority,
+        category,
+        JSON.stringify(source),
+        'test-only',
+        new Date().toISOString(),
+      )
+      .run();
+    await db
+      .prepare('INSERT INTO chunks(id,documentId,chunkIndex,data,searchText) VALUES(?,?,?,?,?)')
+      .bind(chunkId, id, 0, JSON.stringify(chunk), normalizeSearch(text))
+      .run();
+    await db
+      .prepare(
+        'INSERT INTO chunk_search(rowid,searchText) SELECT rowid,searchText FROM chunks WHERE id=?',
+      )
+      .bind(chunkId)
+      .run();
+    seeded.push(id);
+    return { id, chunkId };
+  }
+  async function ask(question, language = 'en') {
+    await request('/api/profile', { method: 'PATCH', body: { language } });
+    const response = await request(`/api/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: { question, requestId: crypto.randomUUID() },
+    });
+    assert.equal(response.status, 200, await response.clone().text());
+    return (await response.text())
+      .trim()
+      .split('\n\n')
+      .map((x) => JSON.parse(x.slice(6)))
+      .find((x) => x.type === 'done').message;
+  }
+  try {
+    const passage =
+      'Synthetic test only: ایران انقلاب نظریات نظریہ رائج. This passage tests lexical retrieval, not historical claims.';
+    const target = await seed(passage);
+    await seed(passage, { status: 'DRAFT' });
+    await seed(passage, { category: 'FIQH', authority: 'SISTANI', topics: ['FIQH'] });
+    for (const [language, question] of [
+      [
+        'ur',
+        'ایران کے اندر عظیم انقلاب کے رونما ہونے کے سلسلے میں کیا راجح اور چند غیر راجح نظریات پائے جاتے ہیں؟',
+      ],
+      [
+        'en',
+        'What prevalent and less prevalent theories explain the emergence of the revolution in Iran?',
+      ],
+      [
+        'roman',
+        'Iran mein inqilab ke barpa hone ke mutaliq raij aur ghair raij nazriyat kya hain?',
+      ],
+    ]) {
+      const result = await ask(question, language);
+      assert.equal(result.category, 'OTHER');
+      assert.equal(result.language, language);
+      if (question.includes('راجح')) {
+        // The synthetic model ignores the wording check. Abstain AFTER retrieval.
+        assert.equal(result.mode, 'insufficient');
+        assert.equal(result.citations.length, 0);
+        assert.ok(
+          (await db.prepare('SELECT embedding FROM chunks WHERE id=?').bind(target.chunkId).first())
+            .embedding,
+        );
+      } else {
+        assert.equal(result.mode, 'grounded');
+        assert.deepEqual(
+          result.citations.map((c) => c.chunkId),
+          [target.chunkId],
+        );
+      }
+    }
+    const unknown = await seed('Synthetic chronometry describes measuring time.');
+    // Translation throws; the original English terms must still reach FTS.
+    assert.equal((await ask('Explain chronometry')).citations[0].chunkId, unknown.chunkId);
+    // Eligible but irrelevant HISTORY evidence fails semantic ranking; retry across topics.
+    await seed('SEMANTIC_MISS chronometry history unrelated synthetic text.', {
+      topics: ['HISTORY'],
+    });
+    assert.equal((await ask('History of chronometry')).citations[0].chunkId, unknown.chunkId);
+    // No QURAN source exists; topic classification must not prevent general retrieval.
+    assert.equal((await ask('Quran and chronometry')).citations[0].chunkId, unknown.chunkId);
+    for (const [language, question] of [
+      ['ur', 'اس کے بارے میں بتائیں'],
+      ['en', 'What about it?'],
+      ['roman', 'Is ke bare mein batayein?'],
+    ]) {
+      const result = await ask(question, language);
+      assert.equal(result.mode, 'clarification');
+      assert.equal(result.citations.length, 0);
+    }
+    assert.equal((await ask('Explain xyzzyunsupported')).mode, 'insufficient');
+    const translated = await seed('Synthetic translation-only test: معرفت.');
+    const originalMatches = await db
+      .prepare('SELECT count(*) AS n FROM chunk_search WHERE chunk_search MATCH ?')
+      .bind('"epistemology"')
+      .first();
+    assert.equal(originalMatches.n, 0);
+    assert.equal((await ask('Explain epistemology')).citations[0].chunkId, translated.chunkId);
+    const conflictA = await seed('Synthetic conflicting account: event preceded the migration.');
+    const conflictB = await seed('Synthetic conflicting account: event followed the migration.');
+    const conflicting = await ask('Compare the conflicting accounts');
+    assert.deepEqual(
+      new Set(conflicting.citations.map((c) => c.chunkId)),
+      new Set([conflictA.chunkId, conflictB.chunkId]),
+    );
+    await db.prepare('DELETE FROM usage_limits').run();
+    assert.equal((await ask('What is the ruling for prayer?')).mode, 'guidance');
+    await seed('Synthetic inventcitation fixture.');
+    const invalid = await request(`/api/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      body: { question: 'Explain inventcitation', requestId: crypto.randomUUID() },
+    });
+    assert.equal(invalid.status, 502);
+    assert.equal((await invalid.json()).error.code, 'INVALID_CITATIONS');
+  } finally {
+    // Preserve historical citation snapshots; make fixture sources ineligible for later tests.
+    for (const id of seeded)
+      await db.prepare("UPDATE sources SET status='UNPUBLISHED' WHERE id=?").bind(id).run();
+  }
 });
 
 test('session listings hide tokens, signout revokes session', async () => {

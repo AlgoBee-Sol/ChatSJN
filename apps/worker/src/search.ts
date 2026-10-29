@@ -51,6 +51,14 @@ export function extractUrduKeywords(response: unknown): string[] {
 
 // Stable search aliases avoid generative transliteration for common domain concepts.
 const vocabulary: [string[], string[]][] = [
+  [['iran', 'iranian', 'irani', 'ایران'], ['ایران']],
+  [['revolution', 'inqilab', 'inqlab', 'inquilab', 'انقلاب'], ['انقلاب']],
+  [
+    ['theories', 'theory', 'nazriyat', 'nazariat', 'nazriya', 'نظریات', 'نظریہ'],
+    ['نظریات', 'نظریہ'],
+  ],
+  // رائج means prevalent; it is not a synonym for راجح (preferred).
+  [['prevalent', 'raij', 'raaij'], ['رائج']],
   [
     ['honesty', 'truthfulness', 'sach', 'sachai', 'sachayi'],
     ['سچائی', 'صداقت'],

@@ -2,13 +2,28 @@
 import { WorkerEntrypoint } from 'cloudflare:workers';
 export default class AI extends WorkerEntrypoint {
   async run(model, input) {
-    if (model.includes('bge-m3')) return { data: input.text.map(() => Array(1024).fill(0.01)) };
-    if (JSON.parse(input.messages[1].content).searchQuestion) return { response: { terms: [] } };
-    const { evidence } = JSON.parse(input.messages[1].content);
+    if (model.includes('bge-m3'))
+      return {
+        data: input.text.map((text) =>
+          Array.from({ length: 1024 }, (_, i) =>
+            i === (text.includes('SEMANTIC_MISS') ? 1 : 0) ? 1 : 0,
+          ),
+        ),
+      };
+    const { searchQuestion, evidence, question } = JSON.parse(input.messages[1].content);
+    if (searchQuestion) {
+      if (searchQuestion.includes('chronometry')) throw new Error('Synthetic translation outage');
+      if (searchQuestion.includes('epistemology')) return { response: 'معرفت' };
+      return { response: { terms: [] } };
+    }
     return {
       response: {
         explanation: 'The supplied synthetic passage describes honesty.',
-        citationIds: [evidence[0].chunkId],
+        citationIds: question.includes('inventcitation')
+          ? ['invented']
+          : question.includes('conflicting')
+            ? evidence.map((e) => e.chunkId)
+            : [evidence[0].chunkId],
         quotes: [],
         insufficient: false,
       },
