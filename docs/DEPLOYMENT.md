@@ -18,7 +18,7 @@ The hosted beta runs entirely on Cloudflare. The local Express/MongoDB app remai
 
 These resources belong only to SJN AI. Other applications in the account are unchanged. Account/resource identifiers are configuration, not credentials. Secrets and administrator bootstrap files live only in ignored `.local/cloudflare/` files, with owner-only permissions; the runtime auth secret is a Worker secret.
 
-Latest verified deployment: Worker version `fbb02276-2eee-4aa5-8a94-795126c15f71`, tagged with application commit `fc38150`, deployed on 30 October 2026 at 00:55 Pakistan time and serving 100% of traffic. Release checks and live endpoint checks passed; see [the verification record](TESTING.md#release-revalidation-2026-10-30-pakistan-time) for the remaining owner-assisted Google linking/login check.
+Latest verified deployment: Worker version `fbb02276-2eee-4aa5-8a94-795126c15f71`, tagged with application commit `fc38150`, deployed on 30 October 2026 at 00:55 Pakistan time and serving 100% of traffic. Release checks, live endpoint checks, explicit Google linking and subsequent Google-only sign-in passed; see [the verification record](TESTING.md#release-revalidation-2026-10-30-pakistan-time).
 
 ## Behavior and scope
 

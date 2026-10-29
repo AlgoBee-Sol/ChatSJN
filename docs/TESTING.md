@@ -70,7 +70,7 @@ Run `node scripts/sources/verify_question_pipeline.mjs after` for the live check
 
 Deployed Worker version `7b59b60b-cb7f-4462-8634-bff6fb016884` with the Google OAuth web client configured and its secret stored as a `secret_text` binding. The existing Better Auth secret was preserved. The production web and Worker builds, Worker type check, all 13 Worker integration tests, and deployment dry run passed.
 
-Live `/api/auth/config` returns `googleEnabled: true`. Chrome shows an enabled **Continue with Google** button; clicking it reaches Google's account chooser with the configured client, exact `/api/auth/callback/google` redirect, PKCE S256, and only `email profile openid` scopes. No redirect mismatch or invalid-client error appeared. The owner subsequently reported the expected existing-email/account-not-linked message. This guard requires existing password users to connect Google from their authenticated preferences; it is not a provider-configuration failure. The existing administrator session remains intact. Explicit account linking and a subsequent Google-only session remain to be verified.
+Live `/api/auth/config` returns `googleEnabled: true`. Chrome shows an enabled **Continue with Google** button; clicking it reaches Google's account chooser with the configured client, exact `/api/auth/callback/google` redirect, PKCE S256, and only `email profile openid` scopes. No redirect mismatch or invalid-client error appeared. The owner subsequently reported the expected existing-email/account-not-linked message. This guard requires existing password users to connect Google from their authenticated preferences; it is not a provider-configuration failure. The existing administrator session remained intact. Explicit linking and a subsequent Google-only session were then verified successfully on the release below.
 
 ### Release revalidation (2026-10-30, Pakistan time)
 
@@ -78,11 +78,12 @@ Commit `fc38150` passed repository checks, lint, all three TypeScript checks, 69
 
 The checked build was deployed as Worker version `fbb02276-2eee-4aa5-8a94-795126c15f71`, tagged `fc38150`, at 00:55 Pakistan time. Cloudflare confirmed this version receives 100% of traffic. Existing authentication secrets and D1/R2/AI bindings were retained. Post-deployment requests to `/`, `/login`, `/app/chat`, `/app/settings`, `/api/health`, `/api/ready`, and `/api/auth/config` all returned HTTP 200; readiness reported database availability, an AI binding, and Google enabled. Readiness does not verify database writes or an AI generation request.
 
-The live existing-account session opened preferences and started **Connect Google** successfully. Google requested only `email profile openid` with PKCE S256 and the configured callback. The matching Google account requires owner authentication; the flow is awaiting that step. A successful account link and subsequent Google-only session have **not** yet been verified. To complete the check:
+The live existing-account session opened preferences and started **Connect Google** successfully. Google requested only `email profile openid` with PKCE S256 and the configured callback. The owner completed authentication with the matching Google account. The following live end-to-end checks then passed on Worker version `fbb02276-2eee-4aa5-8a94-795126c15f71`:
 
-1. From the existing password account's preferences, choose **Connect Google** and authenticate with the same email. If the OAuth attempt expires, restart it from preferences.
-2. Confirm the callback returns to preferences showing **Google connected** and preserves the existing profile.
-3. Sign out of SJN, choose **Continue with Google**, and select the linked account.
-4. Confirm the existing workspace, preferences and conversation history return without a new onboarding flow; reload the page to verify the session persists.
+1. The linking callback returned to preferences with **Google connected** and the existing profile intact.
+2. Signing out returned to the public homepage with **Log in**, confirming the SJN session had ended.
+3. **Continue with Google** and selection of the linked account returned directly to the existing workspace without submitting the SJN password or entering a new onboarding flow.
+4. Conversation history retained the existing saved conversation; the profile and Urdu answer preference were unchanged.
+5. Reloading preferences preserved the authenticated session, **Google connected**, and one active session.
 
-Record the observed outcome here after completing these steps. Do not record passwords, OAuth codes, tokens, or screenshots containing credentials in Git.
+Google linking and subsequent Google-only sign-in are verified. No runtime code change was needed. Evidence was checked through the application UI; credentials, tokens and private account screenshots are excluded from Git.
