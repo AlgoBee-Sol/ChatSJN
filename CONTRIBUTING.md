@@ -14,6 +14,7 @@ Use a small branch per task, open a pull request, and have the other developer r
 
 Get development-only service credentials privately from the owner if your task needs them.
 Real corpora, live accounts, uploads, credentials and database dumps are deliberately absent from Git.
+Follow [SECURITY.md](SECURITY.md) for credential storage and reporting suspected exposure.
 The app can run without a corpus; use a small authorized sample through Source studio for retrieval work.
 Never connect your laptop or staging app to the live database to obtain test data.
 

@@ -16,7 +16,7 @@ The staging URL is reachable publicly, with application login required for priva
 ## GitHub controls
 
 - `main`: one approving review, stale approvals dismissed, required `verify` check, resolved review conversations, linear history, no force pushes or deletion; administrators follow the same rules.
-- CODEOWNERS requests reviews from `@AlgoBee-Sol` and `@frazhaider15`. The author cannot supply their own required review. Fraz must accept the invitation before GitHub recognizes his ownership.
+- CODEOWNERS requests reviews from `@AlgoBee-Sol` and `@frazhaider15`. The author cannot supply their own required review. Fraz has accepted repository write access.
 - Squash merges keep one commit per reviewed change. Feature branches may be deleted after merge.
 - GitHub environments `staging` and `production` permit deployment only from the `main` branch.
 - `production` requires approval from `@AlgoBee-Sol`, with administrator bypass disabled. Self-review of a deployment is allowed so the owner can trigger and explicitly approve a release; code review still requires the other developer.
@@ -28,7 +28,7 @@ Pull requests receive no Cloudflare deployment secrets. Only a successful `main`
 The staging job applies numbered migrations, deploys with the commit SHA, and checks the actual served SHA, readiness, assets, auth origin and unauthenticated access controls.
 These smoke checks do not prove signup, storage writes, answer quality or Google sign-in. Before releasing, manually check login, saved conversations, citations and source upload/review on staging with test data. Check live Google login after releasing changes that affect authentication.
 
-## Deployment credentials: activation requirement
+## Deployment credentials and rotation
 
 Create **separate** Cloudflare API tokens for staging and production. Store each as `CLOUDFLARE_API_TOKEN` in its corresponding GitHub **environment**, not as a shared repository secret.
 Scope each token to its intended Worker and required bound resources wherever the available Cloudflare roles support it. The workflow deploys Worker code/assets and runs D1 migration queries; a Worker-only token without D1 query access cannot run the migrations step.
@@ -36,7 +36,9 @@ Do not grant billing, member administration, token administration or unrelated a
 Runtime `BETTER_AUTH_SECRET` and Google secrets stay in Cloudflare. Bootstrap them once using a private secrets file; regular CI deployments retain them. Never copy the live auth secret into staging.
 
 GitHub environment settings: `Settings → Environments → staging/production → Environment secrets`.
-Until these secrets are installed, automated deployments cannot authenticate. The verification job remains usable.
+Both environment secrets were installed on 1 November 2026 (Pakistan time). Each token has **Individual Workers Editor** on its own Worker and **account-wide D1 Write**, the broader database permission explicitly approved for migrations. The D1 permission can access other databases in this account; the tokens do not provide full resource isolation. Neither token has billing, member administration or token administration permissions.
+
+The tokens expire on **30 January 2027 at 04:59 Pakistan time**. Rotate them before 29 January: create replacement tokens with the same approved permissions and a bounded lifetime, update the matching environment secrets, verify staging and the next approved live release, then revoke the replaced tokens. Never paste token values into issues, pull requests or logs. Follow [SECURITY.md](../SECURITY.md) if exposure is suspected.
 
 ## Release live
 
