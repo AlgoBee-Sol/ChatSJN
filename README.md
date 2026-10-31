@@ -131,7 +131,9 @@ pnpm lint
 pnpm typecheck
 pnpm test            # Unit/API tests with disposable MongoDB
 pnpm test:worker     # Isolated workerd/D1/R2 integration tests
+pnpm test:ci         # Release gates and staging/live isolation
 pnpm check:cloudflare # Build and validate the hosted deployment without uploading
+pnpm check:staging   # Build and validate the separate staging deployment
 pnpm test:e2e        # Desktop/mobile Chrome journeys and accessibility checks
 pnpm build           # Web build, public-page prerendering and API compilation
 pnpm docs:mockups    # Rebuild public previews from the synthetic E2E screenshots
@@ -140,6 +142,8 @@ pnpm docs:mockups    # Rebuild public previews from the synthetic E2E screenshot
 Browser tests use installed Google Chrome, ports `5174`/`3002`, and a disposable database. See [testing](docs/TESTING.md) for setup, coverage, recorded results, and the production smoke check. The GitHub Actions workflow runs repository checks, lint, type checking, tests, and the build; no badge claims a remote result before that workflow has run in your repository.
 
 ## Documentation
+
+Team members should start with [CONTRIBUTING.md](CONTRIBUTING.md). The [team release runbook](docs/TEAM_WORKFLOW.md) explains reviewed pull requests, isolated staging, live approval, deployment-secret activation and recovery. GitHub Actions deploys staging after successful `main` checks once its environment token is configured; live uses the separate **Release live** workflow.
 
 | Guide                                          | Covers                                                          |
 | ---------------------------------------------- | --------------------------------------------------------------- |

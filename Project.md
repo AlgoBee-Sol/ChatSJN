@@ -113,6 +113,8 @@ The existing corpus received automated technical review with sampled inspection.
 
 ## 7. Implementation references
 
+Team development uses reviewed task branches and separate staging/live configuration. Start with [CONTRIBUTING.md](CONTRIBUTING.md) and the [team release runbook](docs/TEAM_WORKFLOW.md). The staging app has its own D1 database, private R2 bucket and auth secret. Automated deployment requires Cloudflare tokens in the corresponding GitHub environments; live releases require owner approval.
+
 | Area                             | Repository reference                                                      |
 | -------------------------------- | ------------------------------------------------------------------------- |
 | Models and retrieval             | [apps/worker/src/ai.ts](apps/worker/src/ai.ts)                            |

@@ -1,5 +1,8 @@
 {
   "extends": "../../tsconfig.json",
-  "compilerOptions": { "types": ["@cloudflare/workers-types", "node"] },
+  "compilerOptions": {
+    "types": ["@cloudflare/workers-types", "node"],
+    "allowImportingTsExtensions": true
+  },
   "include": ["src", "tests", "../../cloudflare.config.ts"]
 }

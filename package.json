@@ -22,7 +22,12 @@
     "build:cloudflare": "pnpm --filter @sjn/web build && pnpm build:worker && node scripts/package-cloudflare.mjs",
     "test:worker": "pnpm build:worker && node --test apps/worker/tests/runtime.test.mjs",
     "deploy:cloudflare": "pnpm build:cloudflare && cf deploy --prebuilt --mode production",
-    "check:cloudflare": "pnpm build:cloudflare && cf deploy --prebuilt --mode production --dry-run"
+    "check:cloudflare": "pnpm build:cloudflare && cf deploy --prebuilt --mode production --dry-run",
+    "test:ci": "node --test scripts/ci/*.test.mjs",
+    "build:staging": "pnpm --filter @sjn/web build && pnpm build:worker && node scripts/package-cloudflare.mjs --mode staging",
+    "check:staging": "pnpm build:staging && cf deploy --prebuilt --mode staging --dry-run",
+    "smoke:staging": "node scripts/ci/smoke.mjs staging",
+    "smoke:production": "node scripts/ci/smoke.mjs production"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",

@@ -52,7 +52,14 @@ app.use('/api/*', async (c, next) => {
   }
   await next();
 });
-app.get('/api/health', (c) => c.json({ status: 'ok', version: '0.2.0', runtime: 'cloudflare' }));
+app.get('/api/health', (c) =>
+  c.json({
+    status: 'ok',
+    version: '0.2.0',
+    runtime: 'cloudflare',
+    release: c.env.RELEASE_SHA || 'development',
+  }),
+);
 app.get('/api/ready', async (c) => {
   await c.env.DB.prepare('SELECT 1 FROM profiles LIMIT 1').all();
   return c.json({

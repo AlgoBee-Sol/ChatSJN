@@ -1,16 +1,27 @@
 name: Verify application
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 10.28.2
       - run: pnpm install --frozen-lockfile
@@ -18,17 +29,67 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      - run: pnpm test:ci
       - run: python3 -m unittest discover -s scripts/sources -p 'test_*.py'
       - run: node --test scripts/sources/*.test.mjs
       - run: pnpm test:worker
       - run: pnpm build
       - run: pnpm check:cloudflare
+      - run: pnpm check:staging
       - run: pnpm exec playwright install --with-deps chrome
       - run: pnpm test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: browser-results
           path: |
             playwright-report
             test-results
+          retention-days: 7
+
+  staging:
+    name: Deploy staging
+    needs: verify
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: staging
+      url: https://sjn-ai-staging.algobee-solutions.workers.dev
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    env:
+      CF_SEND_TELEMETRY: 'false'
+      SJN_RELEASE_SHA: ${{ github.sha }}
+    steps:
+      - name: Require staging deployment credentials
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo '::error::Add CLOUDFLARE_API_TOKEN to the staging GitHub environment; see docs/TEAM_WORKFLOW.md.'
+            exit 1
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.28.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:staging
+      - run: pnpm exec cf deploy --prebuilt --mode staging --dry-run
+      - name: Apply staging migrations
+        run: node scripts/ci/migrations.mjs staging apply
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Deploy reviewed staging build
+        run: pnpm exec cf deploy --prebuilt --mode staging --tag "$SJN_RELEASE_SHA"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Verify deployed release
+        run: pnpm smoke:staging "$SJN_RELEASE_SHA"

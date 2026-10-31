@@ -1,5 +1,7 @@
 # Cloudflare deployment and migration
 
+For routine two-person development and releases, use the [team release runbook](TEAM_WORKFLOW.md). It covers protected `main`, staging deployment, live approvals and environment-specific credentials. The manual CLI commands below remain available to the release operator for bootstrap and recovery.
+
 The hosted beta runs entirely on Cloudflare. The local Express/MongoDB app remains available through `pnpm dev`; its data has not been moved or deleted.
 
 ## Current deployment
@@ -49,7 +51,7 @@ pnpm exec cf deploy --prebuilt --mode production
 
 `pnpm build:cloudflare` builds/prerenders React, bundles the Worker, and creates validated `.cloudflare/output/v0/` artifacts using pinned Cloudflare build-output helpers. `pnpm check:cloudflare` also performs a no-upload CLI dry run. `pnpm deploy:cloudflare` rebuilds and deploys. Build output and source maps are ignored by Git; source maps are Worker deployment modules, not public web assets.
 
-Configuration and inferred binding types come from `cloudflare.config.ts`. Do not run plain `cf build` for this custom monorepo build: use the package script and `cf deploy --prebuilt --mode production`. Do not create a parallel Wrangler configuration.
+Configuration and inferred binding types come from `cloudflare.config.ts`; resource identifiers and origins are in `config/environments.ts`. `pnpm build:staging` packages staging, while `pnpm build:cloudflare` packages live. Always use the matching `cf deploy --prebuilt --mode staging|production`; a dry run checks the package before upload. Do not run plain `cf build` for this custom monorepo build or create a parallel Wrangler configuration.
 
 Apply new, reviewed migrations before deploying code that requires them:
 
@@ -77,7 +79,7 @@ For replacement credentials or a new hostname:
 
 1. Create a Google OAuth **Web application** client and configure its consent screen/testing audience.
 2. Add the authorized origin `https://sjn-ai-beta.algobee-solutions.workers.dev` and exact callback `https://sjn-ai-beta.algobee-solutions.workers.dev/api/auth/callback/google`.
-3. Set the public `googleClientId` constant in `cloudflare.config.ts`; this enables the `GOOGLE_CLIENT_ID` binding and makes `GOOGLE_CLIENT_SECRET` a required secret. Add `GOOGLE_CLIENT_SECRET` to the ignored secret file, keeping the existing auth secret.
+3. Set the public Google client ID for the intended environment in `config/environments.ts`; this enables the `GOOGLE_CLIENT_ID` binding and makes `GOOGLE_CLIENT_SECRET` a required secret. Add `GOOGLE_CLIENT_SECRET` to the ignored secret file, keeping the existing auth secret.
 4. Build and deploy with the secret-file option above. Check `/api/auth/config`, then test login, cancellation and explicit linking from an existing password account.
 
 No implicit account merging is enabled. OAuth users must complete adult onboarding before chatting. Transactional email verification and email-based password recovery are not configured; password changes require the current password. Add a mail provider before promising email recovery.
