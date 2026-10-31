@@ -5,7 +5,8 @@ import { gzipSync } from 'node:zlib';
 const [offset, count] = process.argv.slice(2).map(Number);
 if (!Number.isInteger(offset) || !Number.isInteger(count) || count < 1 || count > 10)
   throw new Error('Expected offset and batch size (1–10).');
-const manifest = (await readFile('.local/sources/syedjawadnaqvi/indexing/manifest.jsonl', 'utf8'))
+const directory = process.argv[4] || '.local/sources/syedjawadnaqvi/indexing';
+const manifest = (await readFile(`${directory}/manifest.jsonl`, 'utf8'))
   .trim()
   .split('\n')
   .map(JSON.parse);

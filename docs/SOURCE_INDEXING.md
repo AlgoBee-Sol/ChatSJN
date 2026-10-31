@@ -2,7 +2,59 @@
 
 The owner requested review and indexing of the extracted `syedjawadnaqvi.com` archive for the live chatbot. This is an **automated technical review with sampled text inspection**, not scholarly certification of every assertion or an independently verified copyright license.
 
-## Review decisions
+## Expansion verified on 31 October 2026
+
+The live index now contains **1,499 approved source documents and 35,115 passages**.
+The 30 October collection gathered 213 additional Urdu book chapters; the import
+completed on 31 October after an interrupted batch was resumed from its checkpoint.
+
+| Expansion decision                      | Documents |
+| --------------------------------------- | --------: |
+| Collected chapters                      |       213 |
+| Imported educational texts              |       168 |
+| Publisher forewords / contents excluded |        34 |
+| Other exact duplicates excluded         |        11 |
+
+These exclusion counts are mutually exclusive. One front-matter entry was also an
+exact duplicate. The deeper review identified five additional contents/publisher
+entries from their actual text or labels such as `_TOC` and `arz e nashir`.
+Deduplication checked both the original local archive and a live source-hash inventory.
+
+- All **168 private R2 originals**, totaling **14,236,354 bytes**, passed complete
+  read-back SHA-256/MD5 and byte-length checks.
+- All **3,784 new passages** matched the prepared original text, sequence and
+  normalized search text. Each source has exactly one completed import job and
+  approval audit record.
+- All **1,331 prior source IDs, approval states and text hashes** were preserved.
+  None of the 45 excluded archive IDs was imported. No sources remain processing.
+- Foreign-key and FTS5 external-content integrity checks passed. The final D1
+  database size was **360,275,968 bytes** (about **343.6 MiB**).
+- Urdu, English and Roman Urdu requests returned grounded-mode responses, and a
+  Fiqh request returned the expected guidance. All **13 citations** (12 distinct
+  passages) matched approved stored text and provenance; eight citations in
+  Urdu/English answers came from this expansion. The Roman Urdu wording selected
+  weaker older evidence, so these checks are **not a claim of semantic accuracy**.
+  Multilingual retrieval and claim-level support still require evaluation.
+- The temporary test learner, account, sessions, profile and conversations were
+  removed. Recording catalog entries were not imported as answer evidence.
+
+Local evidence is under `.local/sources/syedjawadnaqvi/indexing-2026-10-30/`:
+`preflight.json`, `recovery-bookmark.json`, `review.json`, `manifest.jsonl`,
+`checkpoint.jsonl`, `expected-index.json`, `verification.json`,
+`citation-verification.json`, and `test-learner-cleanup.json`. The preflight file
+is a source inventory, not a full database backup. The recovery bookmark records
+the pre-import point in time; its availability is subject to D1 retention.
+
+The reviewer now supports `--baseline ARCHIVE --existing-index PREFLIGHT_JSON`.
+The bulk runner `run_cloudflare_import.mjs` accepts `--directory`, an explicit
+existing cf OAuth profile via `--credentials`, and optional `--offset`/`--limit`.
+It defaults to a dry run; `--apply` performs the authorized import in five-source
+batches. `verify_cloudflare_import.mjs` accepts the same directory and credential
+arguments and checks every original, passage, prior source, exclusion and index.
+Credentials stay local and are never logged. The shared importer preserves
+published/rejected states and safely replaces staged FTS entries on resume.
+
+## Initial collection review decisions
 
 | Decision                                          | Documents |
 | ------------------------------------------------- | --------: |

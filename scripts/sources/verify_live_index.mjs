@@ -2,7 +2,15 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { randomBytes, randomUUID } from 'node:crypto';
 const origin = 'https://sjn-ai-beta.algobee-solutions.workers.dev';
-const directory = '.local/sources/syedjawadnaqvi/indexing';
+const directory = process.argv[2] || '.local/sources/syedjawadnaqvi/indexing';
+const cases = process.argv[3]
+  ? JSON.parse(await readFile(process.argv[3], 'utf8'))
+  : [
+      ['ur', 'اخلاق میں سچائی کی اہمیت کیا ہے؟', 'grounded'],
+      ['en', 'What do the sources teach about honesty?', 'grounded'],
+      ['roman', 'Akhlaq mein sabr ki ahmiyat kya hai?', 'grounded'],
+      ['en', 'What is the ruling for prayer?', 'guidance'],
+    ];
 await mkdir(directory, { recursive: true });
 const credentialPath = `${directory}/test-learner.json`;
 let credentials;
@@ -56,12 +64,7 @@ try {
     language: 'ur',
     complete: true,
   });
-  for (const [language, question, expected] of [
-    ['ur', 'اخلاق میں سچائی کی اہمیت کیا ہے؟', 'grounded'],
-    ['en', 'What do the sources teach about honesty?', 'grounded'],
-    ['roman', 'Akhlaq mein sabr ki ahmiyat kya hai?', 'grounded'],
-    ['en', 'What is the ruling for prayer?', 'guidance'],
-  ]) {
+  for (const [language, question, expected] of cases) {
     await request('/api/profile', 'PATCH', { language });
     const conversation = (await (await request('/api/conversations', 'POST', {})).json())
       .conversation;
@@ -108,7 +111,7 @@ try {
   await request('/api/auth/sign-out', 'POST', {}).catch(() => {});
 }
 if (
-  results.length !== 4 ||
+  results.length !== cases.length ||
   results.some((x) => x.mode !== x.expected || (x.mode === 'grounded' && !x.citations?.length))
 )
   process.exitCode = 1;

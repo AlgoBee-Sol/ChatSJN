@@ -1,7 +1,7 @@
 # SJN AI — Technical Overview and Working Flow
 
 **Prepared for:** Senior engineering review\
-**Date:** 28 October 2026\
+**Date:** 31 October 2026\
 **Status:** Deployed web beta; educational scope\
 **Application:** [SJN AI](https://sjn-ai-beta.algobee-solutions.workers.dev)
 
@@ -76,21 +76,23 @@ For example, a question about **honesty** gains the search aliases **سچائی 
 
 ## 5. How much data is stored, and where?
 
-The first collection comes from the [Syed Jawad Naqvi website](https://www.syedjawadnaqvi.com/). Counts were reconfirmed on 28 October 2026.
+The text collection comes from the [Syed Jawad Naqvi website](https://www.syedjawadnaqvi.com/). Counts were reconfirmed after the expansion completed on 31 October 2026.
 
-| Data                       | Quantity and storage                                                                                                |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Collected website texts    | 1,466 archived locally; excluded from GitHub.                                                                       |
-| Excluded texts             | 126 exact duplicates and 9 publisher forewords/table-of-contents entries.                                           |
-| Approved source documents  | **1,331**, with title, URL, attribution, version, approval state and file reference in D1's `sources` table.        |
-| Imported text originals    | **1,331 private R2 objects**, approximately **112.4 MiB** at initial verification.                                  |
-| Searchable passages        | **31,331** in D1's `chunks` table; normalized search text is indexed through FTS5's `chunk_search` table.           |
-| Embedding cache            | Candidate vectors and model IDs are stored on demand in D1; the complete corpus does not need embedding before use. |
-| Accounts and conversations | Better Auth records, profiles, messages and citation snapshots are stored in D1.                                    |
+| Data                       | Quantity and storage                                                                                                     |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Collected website texts    | **1,679** archived locally across the original collection and October expansion; excluded from GitHub.                   |
+| Excluded texts             | **137 exact duplicates and 43 publisher forewords/table-of-contents entries**, counted in mutually exclusive categories. |
+| Approved source documents  | **1,499**, with title, URL, attribution, version, approval state and file reference in D1's `sources` table.             |
+| Imported text originals    | **1,499 private R2 originals**; the new batch added **13.6 MiB** of verified source text.                                |
+| Searchable passages        | **35,115** in D1's `chunks` table; normalized search text is indexed through FTS5's `chunk_search` table.                |
+| Embedding cache            | Candidate vectors and model IDs are stored on demand in D1; the complete corpus does not need embedding before use.      |
+| Accounts and conversations | Better Auth records, profiles, messages and citation snapshots are stored in D1.                                         |
 
-The recorded D1 database size was approximately **302.1 MiB**, including source passages, indexes and application tables. Both storage sizes are historical snapshots from **24 October 2026**, not fresh live measurements; they grow with usage. See the [indexing report](docs/SOURCE_INDEXING.md).
+The D1 database measured approximately **343.6 MiB** on **31 October 2026**, including source passages, indexes and application tables. The expansion added **168 texts and 3,784 passages** after excluding 34 front-matter entries and 11 other duplicates from 213 collected chapters. Every new original and passage was verified; all 1,331 previous source identities, approval states and text hashes were preserved. See the [indexing report](docs/SOURCE_INDEXING.md).
 
-Recording links are cataloged without searchable transcripts. The archive contained no discoverable PDFs; the uploader supports readable PDF, TXT and Markdown files.
+Recording links are cataloged without searchable transcripts. The Islamimarkaz pilot contains **740 recording records**, which remain outside answer retrieval. The original text archive contained no discoverable PDFs; the uploader supports readable PDF, TXT and Markdown files.
+
+Live expansion checks returned 13 citations that matched approved passages exactly, including eight citations from the new material in Urdu/English answers. The tested Roman Urdu wording selected weaker older evidence; citation consistency does not establish answer correctness, and multilingual retrieval remains an evaluation priority.
 
 The preparation flow is:
 

@@ -1,5 +1,43 @@
 # Public source extraction
 
+## Additional collection and update commands
+
+To collect newly listed SJN chapter IDs against the original archive:
+
+```sh
+python3 scripts/sources/gather_sjn_updates.py \
+  --output .local/sources/syedjawadnaqvi/updates-YYYY-MM-DD
+```
+
+This checks the public book, magazine, lesson and homepage series catalogs. It
+archives new readable texts with originals, hashes, source URLs and attribution,
+and flags exact duplicates against the baseline and within the new batch. It does
+not check revisions of existing IDs or category-only entries. Use a fresh dated
+directory for a fresh snapshot; rerunning a directory uses its verified cache.
+
+To inventory selected educational collections from Islamimarkaz:
+
+```sh
+python3 scripts/sources/gather_islamimarkaz.py \
+  --output .local/sources/islamimarkaz/YYYY-MM-DD
+```
+
+The default ten collections cover Quran commentary, Nahjul Balagha, Imam Ali's
+testament, time use and Imam Hussain's movement. The command saves the public
+sitemap, raw server-rendered catalog responses, a deduplicated recording catalog,
+and a small transcription queue. Recording metadata is **not a transcript** and
+must not be indexed as answer evidence. `--audio-samples 3` optionally attempts
+up to three direct audio downloads, each limited to 80 MB. Audio hosts may deny
+access; failures are recorded without attempting to bypass the denial. No video,
+live-stream download, transcription service or application publication is invoked.
+
+Both commands keep source content under ignored `.local/` paths. Records remain
+unreviewed. `report.json` records scope, counts and errors; publication still uses
+the existing source review workflow. Source-page HTML is archive evidence and must
+not be served as trusted application HTML.
+
+## Original full-site extractor
+
 The manually invoked SJN extractor archives the public, published catalog at
 [syedjawadnaqvi.com](https://www.syedjawadnaqvi.com/). It extracts website text,
 downloads explicitly linked PDFs, and catalogs recording links. It does not download

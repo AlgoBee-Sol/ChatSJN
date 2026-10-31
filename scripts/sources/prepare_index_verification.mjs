@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { gzipSync } from 'node:zlib';
-const directory = '.local/sources/syedjawadnaqvi/indexing';
+const directory = process.argv[2] || '.local/sources/syedjawadnaqvi/indexing';
 const manifest = (await readFile(`${directory}/manifest.jsonl`, 'utf8'))
   .trim()
   .split('\n')

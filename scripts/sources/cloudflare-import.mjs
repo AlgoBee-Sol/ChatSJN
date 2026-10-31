@@ -5,7 +5,12 @@ export default async function importReviewedBatch(cloudflare, accountId, encoded
   const entries = await new Response(
     new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip')),
   ).json();
-  if (accountId !== '70f8868a0c41eedd3481da031af7d6cd' || entries.length > 10)
+  if (
+    accountId !== '70f8868a0c41eedd3481da031af7d6cd' ||
+    !Array.isArray(entries) ||
+    !entries.length ||
+    entries.length > 10
+  )
     throw new Error('Unexpected import target or batch size');
   const base = `/accounts/${accountId}`;
   const dbPath = `${base}/d1/database/b679fbdb-2e8f-477e-8ee5-7b8e5642a0c1/query`;
@@ -67,7 +72,6 @@ export default async function importReviewedBatch(cloudflare, accountId, encoded
         path: `${base}/r2/buckets/sjn-ai-beta-sources/objects/${key}`,
         body: entry.text,
         contentType: 'text/plain; charset=utf-8',
-        rawBody: true,
       });
       if (
         !result.success ||
@@ -104,6 +108,14 @@ export default async function importReviewedBatch(cloudflare, accountId, encoded
         at,
       ],
     });
+    // A previous run may have staged this source before publication. Remove its
+    // old FTS entries within the staging transaction before inserting them again.
+    if (existing.some((row) => row.id === entry.id)) {
+      staged.push({
+        sql: "INSERT INTO chunk_search(chunk_search,rowid,searchText) SELECT 'delete',rowid,searchText FROM chunks WHERE documentId=?",
+        params: [entry.id],
+      });
+    }
     const chunks = [];
     for (let offset = 0; offset < entry.text.length; offset += 2160) {
       const originalText = entry.text.slice(offset, offset + 2400).trim();
@@ -170,7 +182,11 @@ export default async function importReviewedBatch(cloudflare, accountId, encoded
   }
   if (staged.length) {
     await query(staged);
-    await query(published);
+    const result = await query(published);
+    for (let i = 0; i < result.length; i += 3) {
+      if (result[i].meta?.changes !== 1)
+        throw new Error('Publication failed: staged passage count mismatch');
+    }
   }
   return { imported: pending.length, skipped: skip.size, passages, ids: entries.map((x) => x.id) };
 }
